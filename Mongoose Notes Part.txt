@@ -1,0 +1,689 @@
+Mongoose Notes
+
+Mongoose Install Commands
+
+1.npm init -y
+2.npm i nodemon --save-dev
+3.create script.js
+4.scripts kila
+"dev":"nodemon script.js",
+5.npm run dev
+6.npm i mongoose
+
+connection String ahh kandu pidikarathuku cmd propmtla mongoshell command ana mongosh adicha varum
+mongodb compass la parthalum varum new connection la
+
+step 1:
+//database connectivity
+
+const mongoose = require('mongoose');
+
+mongoose.connect('mongodb://127.0.0.1:27017/jvlcode').then(()=>{
+    console.log('connected')
+}).catch(()=>{
+    console.log('connection error')
+})
+
+
+step 2:
+schema creation 
+Folder Create to Models
+under file userModel.js
+Models/userModel.js
+
+//userModel.js
+const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema({
+    name:String,
+    age:Number
+});
+
+const userModel = mongoose.model('User',userSchema);
+
+module.exports = userModel;
+
+
+//script.js
+
+const mongoose = require('mongoose');
+const User = require('./models/userModel');
+
+mongoose.connect('mongodb://127.0.0.1:27017/jvlcode').then(()=>{
+    console.log('connected')
+}).catch(()=>{
+    console.log('connection error')
+})
+
+const user = new User({
+    name:'Logesh',
+    age:28
+})
+
+user.save().then(()=>{
+    console.log('User Saved');
+})
+
+step 2: on the other way
+//above step2 userModel.js is same
+//script.js
+const mongoose = require('mongoose');
+const User = require('./models/userModel');
+
+mongoose.connect('mongodb://127.0.0.1:27017/jvlcode').then(()=>{
+    console.log('connected')
+}).catch(()=>{
+    console.log('connection error')
+})
+
+const user = new User({
+    name:'Logesh',
+    age:28
+})
+
+async function run(){
+    const newuser = await user.save();
+    console.log(newuser)
+}
+run();
+
+step3:on the other way
+database operation mudincha piragu wait panni user ku json data va anupurathuku asyn and await concept use aguthu
+//above step2 userModel.js is same
+//script.js
+const mongoose = require('mongoose');
+const User = require('./models/userModel');
+
+mongoose.connect('mongodb://127.0.0.1:27017/jvlcode').then(()=>{
+    console.log('connected')
+}).catch(()=>{
+    console.log('connection error')
+})
+async function run(){
+    const newuser = await User.create({
+        name:'Logesh',
+        age:28
+    });
+    console.log(newuser)
+}
+run();
+
+step 4:
+name change in Script.js
+
+async function run(){
+    const newuser = await User.create({
+        name:'Logesh',
+        age:28
+    });
+     newuser.name = 'Rahul';
+    await newuser.save();
+
+    console.log(newuser)
+}  
+run();
+
+step 5:
+////schema Types
+
+//userModel.js
+const mongoose = require('mongoose');
+
+const addressSchema = new mongoose.Schema({
+    city:String,
+    street:String
+})
+
+const userSchema = new mongoose.Schema({
+    name:String,
+    age:Number,
+    email:String,
+    createdAt:Date,
+    updatedAt:Date,
+    bestFriend: mongoose.SchemaTypes.ObjectId,
+    hobbies:[String],
+    address:addressSchema
+});
+
+const userModel = mongoose.model('User',userSchema);
+
+module.exports = userModel;
+
+//script.js
+
+const mongoose = require('mongoose');
+const User = require('./models/userModel');
+
+mongoose.connect('mongodb://127.0.0.1:27017/jvlcode').then(()=>{
+    console.log('connected')
+}).catch(()=>{
+    console.log('connection error')
+})
+async function run(){
+    const newuser = await User.create({
+        name:'Logesh',
+        age:28,
+        hobbies:['Sports','Music'],
+        address : {
+            street:"2nd street"
+        }
+    });
+    console.log(newuser)
+}  
+run();
+
+step 6:
+Error Handling in Script.js
+
+async function run(){
+    try{
+        const newuser = await User.create({
+            name:'Logesh',
+            age:'jbg',
+            hobbies:['Sports','Music'],
+            address : {
+                street:"2nd street"
+            }
+        });
+        console.log(newuser)
+    }catch(e){
+       console.log(e.message) or
+        console.log(e.errors) for indebth errors details
+    }
+ 
+}  
+run();
+
+step:7
+Schema Validation
+
+//Script.js
+async function run(){
+    try{
+        const newuser = await User.create({
+            name:'Logesh',
+            age:'28',
+            hobbies:['Sports','Music'],
+            email:'Anbu@gmail.com',
+            address : {
+                street:"2nd street"
+            }
+        });
+        console.log(newuser)
+    }catch(e){
+       console.log(e.errors)
+    }
+ 
+}  
+run();
+
+//userModel.js
+const mongoose = require('mongoose');
+
+const addressSchema = new mongoose.Schema({
+    city:String,
+    street:String
+})
+
+const userSchema = new mongoose.Schema({
+    name:String,
+    age:Number,
+    email:{
+      type:String,
+      required:true,
+    //   lowercase:true
+    uppercase:true
+    },
+    createdAt:Date,
+    updatedAt:Date,
+    bestFriend: mongoose.SchemaTypes.ObjectId,
+    hobbies:[String],
+    address:addressSchema
+});
+
+const userModel = mongoose.model('User',userSchema);
+
+module.exports = userModel;
+
+step 8:
+All Validation Handled 
+
+Mogoose validation vandhu mongodb method galana create, Update Delete kaluku porunthathu apdi porunthanumna mongoosh methode ana Save() methode payanadutha vendum
+
+//Script.js
+const mongoose = require('mongoose');
+const User = require('./models/userModel');
+
+mongoose.connect('mongodb://127.0.0.1:27017/jvlcode').then(()=>{
+    console.log('connected')
+}).catch(()=>{
+    console.log('connection error')
+})
+async function run(){
+    try{
+        const newuser = await User.create({
+            name:'Logesh',
+            age:'18',
+            hobbies:['Sports','Music'],
+            email:'Anbu@gmail.com',
+            address : {
+                street:"2nd street"
+            }
+        });
+        console.log(newuser)
+    }catch(e){
+       console.log(e.errors)
+    }
+ 
+}  
+run();
+
+//userModel.js
+const mongoose = require('mongoose');
+
+const addressSchema = new mongoose.Schema({
+    city:String,
+    street:String
+})
+
+const userSchema = new mongoose.Schema({
+    name:String,
+    age:{
+        type:Number,
+        min:10,
+        max:20,
+        validate:{
+            validator : v=>v%2==0,
+            message : props => `${props.value} is not a even number`
+        }
+    },
+    email:{
+      type:String,
+      required:true,
+    lowercase:true
+    },
+    createdAt:{
+        type:Date,
+        default:()=>Date.now()
+    },
+    updatedAt:Date,
+    bestFriend: mongoose.SchemaTypes.ObjectId,
+    hobbies:[String],
+    address:addressSchema
+});
+
+const userModel = mongoose.model('User',userSchema);
+
+module.exports = userModel;
+
+
+
+////Querey Methods
+//findById
+
+//script.js
+async function run(){
+    try{
+        const user = await User.findById('65d06420cef107683400dead');  
+        console.log(user)
+    }catch(e){
+       console.log(e.errors)
+    }
+ 
+}  
+run();
+
+//find
+//script.js
+async function run(){
+    try{
+        const user = await User.find({name:"Logesh"});  
+        console.log(user)
+    }catch(e){
+       console.log(e.errors)
+    }
+ 
+}  
+run();
+
+//findOne
+//script.js
+async function run(){
+    try{
+        const user = await User.findOne({name:"Logesh"});  
+        console.log(user)
+    }catch(e){
+       console.log(e.errors)
+    }
+ 
+}  
+run();
+//exists(id mattum display pannum)
+//Script.js
+
+async function run(){
+    try{
+        const user = await User.exists({name:"Logesh"});  
+        console.log(user)
+    }catch(e){
+       console.log(e.errors)
+    }
+ 
+}  
+run();
+//where
+//script.js
+async function run(){
+    try{
+        const user = await User.where('name').equals('Logesh');  
+        console.log(user)
+    }catch(e){
+       console.log(e.errors)
+    }
+ 
+}  
+run();
+
+//greater than gt
+async function run(){
+    try{
+        const user = await User.where('age').gt('10');  
+        console.log(user)
+    }catch(e){
+       console.log(e.errors)
+    }
+ 
+}  
+run();
+
+//less than
+async function run(){
+    try{
+        const user = (await User.where('age').gt('10').lt('30'));  
+        console.log(user)
+    }catch(e){
+       console.log(e.errors)
+    }
+ 
+}  
+run();
+
+//limit
+
+async function run(){
+    try{
+        const user = (await User.where('age').gt('10').limit('1'));  
+        console.log(user)
+    }catch(e){
+       console.log(e.errors)
+    }
+ 
+}  
+run();
+
+///populate method used for two schema va bestFriend methode use panni fetch panni eduthukalam
+
+//script.js
+async function run(){
+    try{
+        const user = await User
+        .where('id')
+        .equals('65d055420a6d3f5496c126da')
+      1.  .populate('bestFriend')
+        .limit('1');  
+        console.log(user)
+    }catch(e){
+       console.log(e.errors)
+    }
+ 
+}  
+run();
+
+//userModel.js
+
+const mongoose = require('mongoose');
+
+const addressSchema = new mongoose.Schema({
+    city:String,
+    street:String
+})
+
+const userSchema = new mongoose.Schema({
+    name:String,
+    age:{
+        type:Number,
+        min:10,
+        max:20,
+        validate:{
+            validator : v=>v%2==0,
+            message : props => `${props.value} is not a even number`
+        }
+    },
+    email:{
+      type:String,
+      required:true,
+    lowercase:true
+    },
+    createdAt:{
+        type:Date,
+        default:()=>Date.now()
+    },
+    updatedAt:Date,
+  1.  bestFriend: {
+       type:mongoose.SchemaTypes.ObjectId,
+       ref:'User'
+    },
+     
+    hobbies:[String],
+    address:addressSchema
+});
+
+const userModel = mongoose.model('User',userSchema);
+
+module.exports = userModel;
+
+//Schema Methods
+
+//Script.js
+async function run(){
+    try{
+        const user = await User.findOne({name:'Logesh'}); 
+        user.sayHi() 
+        console.log(user);
+    }catch(e){
+       console.log(e.errors)
+    }
+}  
+run();
+
+//userModel.js
+userSchema.methods.sayHi = function(){
+    console.log(`My name is ${this.name}`)
+}
+
+///Statics findByName
+//Script.js
+
+async function run(){
+    try{
+        const user = await User.fidByName('Logesh');
+        console.log(user);
+    }catch(e){
+       console.log(e.errors)
+    }
+}  
+run();
+
+//userModel.js
+userSchema.statics.findByName = function (name){
+    return this.where({name:name})
+}
+
+///Query
+
+//script.js
+async function run(){
+    try{
+        const user = await User.find().byName('Logesh');
+        console.log(user);
+    }catch(e){
+       console.log(e.errors)
+    }
+}  
+run();
+
+
+
+///Schema Virtuals
+
+userModel.js
+userSchema.virtual('namedEmail').get(function(){
+    return `${this.name} <${this.email}>`
+})
+
+//Script.js
+async function run(){
+    try{
+        const user = await User.findById('65d0643f760d8b534f926abb')
+        console.log(user);
+        console.log(user.namedEmail);
+    }catch(e){
+       console.log(e.errors)
+    }
+}  
+run();
+
+////Schema Middlewares
+
+data database la store agurathuku munnadi pre methode function ahh use panni execute pannikalam
+//pre
+
+//userModel.js
+userSchema.pre('save',function(next){
+    this.name = `Mr.${this.name}`;
+    next();
+})
+
+//script.js
+
+async function run(){
+    try{
+        const user = await User.findById('65d0643f760d8b534f926abb')
+        user.name = 'Manikandan';
+        user.age = 12;
+        await user.save();
+
+        console.log(user);
+        console.log(user.namedEmail);
+    }catch(e){
+       console.log(e.errors)
+    }
+}  
+run();
+
+///Post Middleware 
+
+this is used to store the data in to the database after execute the required Function 
+
+//userModel.js
+
+userSchema.post('save',function(doc,next){
+    doc.name = `${doc.name} modified`;
+    next();
+})
+
+
+
+
+//All userSchema code in UserModel.js For Verification Purpose Only
+
+
+const mongoose = require('mongoose');
+
+const addressSchema = new mongoose.Schema({
+    city:String,
+    street:String
+})
+
+const userSchema = new mongoose.Schema({
+    name:String,
+    age:{
+        type:Number,
+        min:10,
+        max:20,
+        validate:{
+            validator : v=>v%2==0,
+            message : props => `${props.value} is not a even number`
+        }
+    },
+    email:{
+      type:String,
+      required:true,
+    lowercase:true
+    },
+    createdAt:{
+        type:Date,
+        default:()=>Date.now()
+    },
+    updatedAt:Date,
+    bestFriend: {
+       type:mongoose.SchemaTypes.ObjectId,
+       ref:'User'
+    },  
+    hobbies:[String],
+    address:addressSchema
+});
+
+userSchema.methods.sayHi = function(){
+    console.log(`My name is ${this.name}`)
+}
+userSchema.statics.findByName = function (name){
+    return this.find({name:name})
+}
+
+userSchema.query.byName = function(name){
+    return this.where({name:name})
+}
+
+userSchema.virtual('namedEmail').get(function(){
+    return `${this.name} <${this.email}>`
+})
+
+userSchema.pre('save',function(next){
+    this.name = `Mr.${this.name}`;
+    next();
+})
+
+userSchema.post('save',function(doc,next){
+    doc.name = `${doc.name} modified`;
+    next();
+})
+
+const userModel = mongoose.model('User',userSchema);
+
+module.exports = userModel;
+
+
+//userModel.js
+
+
+userSchema.query.byName = function(name){
+    return this.where({name:name})
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
