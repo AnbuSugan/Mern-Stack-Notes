@@ -1,0 +1,3160 @@
+Backend 
+1.npm init
+entry point : server.js
+2.npm i express dotenv mongoose 
+
+step 1:
+app.js
+const express = require('express');
+const app = express();
+module.exports = app;
+
+step 2:
+create config folder
+config.env nu oru file 
+
+PORT = 8000
+NODE_ENV = development
+
+step 3:
+server and port connection 
+
+server.js
+const app = require('./app');
+const dotenv = require('dotenv');
+const path = require('path')
+
+dotenv.config({path:path.join(__dirname,"config/config.env")});
+
+app.listen(process.env.PORT,()=>{
+    console.log(`server listening to the port: ${process.env.PORT} in ${process.env.NODE_ENV}`)
+})
+
+Bckend Outside Run panramathiri irundha above instruction follow pannanum
+
+
+
+running Command : node .\backend\server.js
+
+step:4
+Connecting Mongodb
+config folderla database.jsnu oru file create pannanum
+
+config/database.js
+
+const mongoose = require('mongoose');
+
+const connectDatabase = ()=>{
+    mongoose.connect(process.env.DB_LOCAL_URI,{
+        useNewUrlParser:true,
+        useUnifiedTopology:true
+    }).then(con=>{
+        console.log(`MongoDB is connected to the host:${con.connection.host}`)
+    }).catch(()=>{
+        console.log(err)
+    })
+}
+
+module.exports = connectDatabase;
+
+//config/config.env
+PORT = 8000
+NODE_ENV = development
+DB_LOCAL_URI = mongodb://127.0.0.1:27017/shopsee
+
+//server.js
+const app = require('./app');
+const dotenv = require('dotenv');
+const connectDatabase = require('./config/database');
+
+dotenv.config({path:path.join(__dirname,"config/config.env")});
+
+1.connectDatabase();
+
+app.listen(process.env.PORT,()=>{
+    console.log(`server listening to the port: ${process.env.PORT} in ${process.env.NODE_ENV}`)
+})
+
+run command node ./backend/server.js
+
+step 5:
+Creating First Route
+create controllers Folder and athuku kila productController.js
+///controllers/productController.js
+exports.getProducts = (req,res,next)=>{
+    res.status(200).json({
+        success : true,
+        message : "This route will show all the products in database"
+    })
+}
+
+///creating routes folder and athuku kila product.js
+//routes/product.js
+const express = require('express');
+const { getProducts } = require('../controllers/productController');
+const router = express.Router();
+
+router.route('/products').get(getProducts);
+
+module.exports = router
+
+///app.js
+const express = require('express');
+const app = express();
+
+1.const products =  require('./routes/product')
+
+2.app.use('/api/v1/',products)
+
+module.exports = app;
+
+step 6:
+use Postman
+create new workspace and workspace name shopsee
+create new collection and collection name products
+create folder and folder name products
+routes name GetProducts
+http://localhost:8000/api/v1/products
+
+installing add environtment for base_url nu kuduthitu {{base_url}}/api/v1/products request ipdi kudutha work agum
+click no environment and set environment name and save and use it 
+
+step 7:
+
+install nodemon
+npm i nodemon --save-dev
+run command
+nodemon .\backend\server.js
+  "scripts": {
+    "start": "nodemon backend/server.js",
+    "dev":"set NODE_ENV = development && nodemon backend/server.js",
+    "prod":"set NODE_ENV=production && nodemon backend/server.js"
+  },
+
+npm run dev
+npm run prod
+
+step 8:
+Creating Product Resource
+
+we will make  API services for creating,getting,updating,and deleting products data
+
+craeting Product Model
+
+
+created model folder and inside create the file productModel.js
+
+creating models folder and productModule.js file
+//models/productModule.js
+const mongoose = require('mongoose');
+
+const productSchema = new mongoose.Schema({
+    name : {
+        type : String,
+        required : [true,"Please Enter Product Name"],
+        trim : true,
+        maxLength : [100,"Product Name cannot exceed 100 Characters"]  
+      },
+      price:{
+        type : Number,
+        default:0.0
+      },
+      description : {
+        type : String,
+        required : [true,"please enter product descripton"]
+      },
+      ratings : {
+        type : String,
+        default:0
+      },
+      images :[
+        {
+            image:{
+                type : String,
+                required: true
+            }
+        }
+      ],
+      category:{
+        type : String,
+        required:[true,"Please enter product category"],
+        enum:{
+            values :[
+                'Electronics',
+                'Mobile Phones',
+                'Laptops',
+                'Accessories',
+                'Headphones',
+                'Food',
+                'Books',
+                'Cloths/Shoes',
+                'Beauty/Health',
+                'Sports',
+                'outdoor',
+                'Home'
+            ],
+            message : "Please select correct category"
+        }
+      },
+      seller:{
+        type:String,
+        required : [true, "Please enter product seller"]
+      },
+      stock:{
+        type : Number,
+        required :[true,"Please Enter Product Stock"],
+        maxLength:[20,'Product stock cannot exceed 20']
+      },
+      numOfReviews:{
+        type:Number,
+        default:0
+      },
+      reviews:[
+        {
+            name:{
+                type: String,
+                required:true
+            },
+            rating:{
+                type : String,
+                required:true
+            },
+            comment:{
+                type : String,
+                required: true
+            }
+        }
+      ],
+      createdAt:{
+        type:Date,
+        default: Date.now()
+      }
+
+})
+
+let schema = mongoose.model('product',productSchema)
+
+module.exports = schema
+
+step 9: Create and Save Product
+
+
+controllers/productControllers.js
+
+1.const Product = require('../models/productModel')
+
+exports.getProducts = (req,res,next)=>{
+    res.status(200).json({
+        success : true,
+        message : "This route will show all the products in database"
+    })
+}
+
+//Create Product - /api/v1/product/new
+2.exports.newProduct = async (req,res,next)=>{
+ const product = await Product.create(req.body);
+ res.status(201).json({
+    success: true,
+    product	
+ })
+}
+
+//routes/product.js
+
+const express = require('express');
+1.const { getProducts, newProduct } = require('../controllers/productController');
+const router = express.Router();
+
+router.route('/products').get(getProducts);
+2.router.route('/product/new').post(newProduct);
+
+module.exports = router
+
+//Check the create data into the postman
+ using below one data 
+
+create data folder and inside products.json
+
+//data/products.json
+
+[
+    {
+        "name": "OPPO F21s Pro 5G",
+        "price": 245.67,
+        "description": "OPPO F21s Pro 5G is a powerful device with a RAM extension feature, that offers brilliant operational speed to users.",
+        "ratings": 4.5,
+        "images": [
+            {
+                "image": "product_87759895.jpg"
+            }    
+        ],
+        "category": "Mobile Phones",
+        "seller": "Amazon",
+        "stock": 5,
+        "numOfReviews": 15,
+        "reviews": []
+    },
+    {
+        "name": "WRISTIO HD, Bluetooth Calling Smart Watch",
+        "price": 150.32,
+        "description": "Minix watches are exclusively designed to fulfill the advanced tech needs of today’s generation.",
+        "ratings": 3.5,
+        "images": [
+            {
+                "image": "/images/products/2.jpg"
+            }
+        ],
+        "category": "Accessories",
+        "seller": "Flipkart",
+        "stock": 9,
+        "numOfReviews": 5,
+        "reviews": []
+    },
+    {
+        "name": "Dell Inspiron 3511 Laptop",
+        "price": 440.57,
+        "description": "Dell Inspiron 3511 11th Generation Intel Core i5-1135G7 Processor (8MB Cache, up to 4.2 GHz);Operating System: Windows 10 Home Single Language, English",
+        "ratings": 2,
+        "images": [
+            {
+                "image": "/images/products/3.jpg"
+            }
+        ],
+        "category": "Laptops",
+        "seller": "Ebay",
+        "stock": 9,
+        "numOfReviews": 12,
+        "reviews": []
+    },
+    {
+        "name": "Lenovo IdeaPad Slim 3 Laptop",
+        "price": 250.45,
+        "description": "Lenovo IdeaPad Slim 311th Gen Intel Core i5-1135G7 | Speed: 2.4 GHz (Base) - 4.2 GHz (Max) | 4 Cores | 8 Threads | 8 MB Cache",
+        "ratings": 4,
+        "images": [
+          {
+            "image": "/images/products/6.jpg"
+          }
+        ],
+        "category": "Laptops",
+        "seller": "Ebay",
+        "stock": 9,
+        "numOfReviews": 12,
+        "reviews": []
+      },
+      {
+        "name": "ASUS VivoBook 15 Laptop",
+        "price": 767.32,
+        "description": "ASUS VivoBook 15 15.6-inch (39.62 cm) HD, Dual Core Intel Celeron N4020, Thin and Light Laptop (4GB RAM/256GB SSD/Integrated Graphics/Windows 11 Home/Transparent Silver/1.8 Kg), X515MA-BR011W",
+        "ratings": 5,
+        "images": [
+          {
+            "image": "/images/products/7.jpg"
+          }
+        ],
+        "category": "Laptops",
+        "seller": "Ebay",
+        "stock": 9,
+        "numOfReviews": 12,
+        "reviews": []
+    },
+    {
+        "name": "PTron Newly Launched Tangent Sports, 60Hrs Playtime",
+        "price": 15.46,
+        "description": "Gigantic 60 + Hours of music playtime on a single charge; BT5.2 Wireless headphones with ENC (Environmental Noise Cancellation) Technology to enhance your voice quality over the voice calls",
+        "ratings": 5,
+        "images": [
+            {
+                "image": "/images/products/4.jpg"
+            }
+        ],
+        "category": "Headphones",
+        "seller": "Amazon",
+        "stock": 4,
+        "numOfReviews": 20,
+        "reviews": []
+    },
+    {
+        "name": "Campus Men's Maxico Running Shoes",
+        "price": 10.12,
+        "description": "The high raised back cover with extra padding.",
+        "ratings": 3,
+        "images": [
+            {
+                "image": "/images/products/5.jpg"
+            }
+        ],
+        "category": "Sports",
+        "seller": "Ebay",
+        "stock": 6,
+        "numOfReviews": 9,
+        "reviews": []
+    }
+]
+
+step 10: Error faced in Postman so adding json format in app.js
+
+const express = require('express');
+const app = express();
+
+1.app.use(express.json());
+const products =  require('./routes/product')
+
+app.use('/api/v1/',products)
+
+module.exports = app;
+
+//Sucess create data
+
+///creating Data Seeder
+backend/Utils folder kulla/seeder.js
+const products = require('../data/products.json');
+const Product = require('../models/productModel');
+const dotenv = require('dotenv');
+const connectDatabase = require('../config/database')
+
+dotenv.config({path:'backend/config/config.env'});
+connectDatabase();
+
+
+const seedProducts = async ()=>{
+    try{
+        await Product.deleteMany();
+        console.log('Products deleted!')
+        await Product.insertMany(products);
+        console.log('All Products added');
+
+    }catch(error){
+        console.log(error.message);
+    }
+process.exit();
+}
+
+seedProducts();
+
+//Package.json la
+   "seeder":"node utils/seeder.js"
+run command : npm run seeder
+
+step:11
+Get All Products
+ ithula modifymattum Panna pothum Ella data vum erkanavae irukuthu
+controllers/productController.js
+//Get All Products - /api/v1/products
+//Get All Products - /api/v1/products
+exports.getProducts = async (req,res,next)=>{
+    const products = await  Product.find();
+    res.status(200).json({
+        success : true,
+        count:products.length,
+        products
+    })
+}
+
+
+routes/product.js
+
+router.route('/products').get(getProducts);
+
+step 12:
+Get Single Product
+controllers/productController.js
+   //Get Single Products -/api/v1/product/:id
+exports.getSingleProduct = async(req,res,next)=>{
+    const product = await Product.findById(req.params.id);
+    
+    if(!product){
+        return res.status(404).json({
+            success: false,
+            message:"Product not found"
+        })
+    }
+    res.status(201).json({
+        success:true,
+        product
+    })
+}
+routes/product.js
+router.route('/product/:id').get(getSingleProduct);
+
+
+step:13
+
+//Update Product 
+//controllers/productControllers.js
+//Update Product-/api/v1/product/:id
+exports.updateProduct = async (req,res,next)=>{
+    let product = await Product.findById(req.params.id);
+
+    if(!product){
+        return res.status(404).json({
+            success: false,
+            message: "Product not found"
+        });
+    }
+    product = await Product.findByIdAndUpdate(req.params.id,req.body,{
+        new: true,
+        runValidators:true
+    })
+        
+    res.status(200).json({
+        success: true,
+        product
+    })
+}
+
+//routes/product.js
+
+router.route('/product/:id')
+                           .get(getSingleProduct)
+                           .put(updateProduct)
+
+
+step :14
+Delete Product
+controllers/productControllers.js
+//Delete Product-/api/v1/product/:id
+//Delete Product-/api/v1/product/:id
+exports.deleteProduct = async (req,res,next) =>{
+    const product = await Product.findById(req.params.id);
+    
+    if(!product){
+        return res.status(404).json({
+            success:false,
+            message:"Product Not found"
+        });
+    }
+
+    await product.deleteOne({ _id: req.params.id });
+
+    res.status(200).json({
+        success: true,
+        message:"Product Deleted!"
+    })
+}
+//routes/product.js
+router.route('/product/:id')
+                           .get(getSingleProduct)
+                           .put(updateProduct)
+                           .delete(deleteProduct)
+
+
+
+Step -12
+//////Handling Errors
+-We will handle unhandled errors like database errors,promise errors.
+-Sending Environment based error response.
+step:12
+	
+Creating Error Handler Class
+
+utils kra folder kila 	errorHandler.js kra folder create pannikanum
+
+utils/errorHandler.js
+
+class ErrorHandler extends Error {
+    constructor(message,statusCode){
+        super(message)
+        this.statusCode = statusCode;
+        Error.captureStackTrace(this, this.constructor)
+    }
+}
+
+module.exports = ErrorHandler;
+
+//creating middlewares folder and inside create error.js
+
+middlewares/error.js
+module.exports = (err, req, res, next) => {
+    err.statusCode = err.statusCode || 500;
+
+    res.status(err.statusCode).json({
+        success:false,
+        message: err.message,
+        stack:err.stack
+    })
+}
+
+//app.js
+const express = require('express');
+const app = express();
+1.const errorMiddleware = require('./middlewares/error')
+
+app.use(express.json());
+const products =  require('./routes/product')
+
+app.use('/api/v1/',products)
+2.app.use(errorMiddleware)
+
+module.exports = app;
+
+
+//productController.js
+//Get Single Products -/api/v1/product/:id
+exports.getSingleProduct = async(req,res,next)=>{
+    const product = await Product.findById(req.params.id);
+    
+    if(!product){
+
+     return next(new ErrorHandler('Product not found',400));
+
+        }
+    
+    res.status(201).json({
+        success:true,
+        product
+    })
+}
+
+
+Step:15
+Development and Production Error
+////Environment Based Errors
+
+//middlewares/error.js
+
+module.exports = (err, req, res, next) => {
+    err.statusCode = err.statusCode || 500;
+
+
+if(process.env.NODE_ENV == 'development'){
+    res.status(err.statusCode).json({
+        success:false,
+        message: err.message,
+        stack: err.stack
+    })
+}
+if(process.env.NODE_ENV == 'production')
+    res.status(err.statusCode).json({
+        success:false,
+        message: err.message,
+       
+    })
+}
+
+
+Step 16:
+///Catch Async Errors
+
+await ,async vara idathila vara error handle pannum
+
+middlewares folder kila catchAsynchError.js kila
+
+//middlewares/catchAsynchError.js
+module.exports = func => (req, res, next) => 
+       Promise.resolve(func(req, res, next)).catch(next)
+
+
+//controllers/productControllers.js
+//Create Product - /api/v1/product/new
+exports.newProduct = catchAsyncError (async (req,res,next)=>{
+    const product = await Product.create(req.body);
+    res.status(201).json({
+       success: true,
+       product
+    })
+   });
+
+
+step 14:
+Handling Validating Errors
+ indha error new product create pannumbothu ethavathu field vittu pochina athuku validate panna use agum
+postman la indha api vachi check pannanum
+//Create Product - /api/v1/product/new
+
+//middlewares/error.js
+
+module.exports = (err, req, res, next) => {
+    err.statusCode = err.statusCode || 500;
+
+
+if(process.env.NODE_ENV == 'development'){
+    res.status(err.statusCode).json({
+        success:false,
+        message: err.message,
+        stack: err.stack,
+       1. error: err
+    })
+}
+if(process.env.NODE_ENV == 'production'){
+   2.let message = err.message;
+  3. let error = {...err};
+
+ 4.  if(err.name == "ValidationError"){
+    message = Object.values(err.errors).map(value => value.message)
+    error = new Error(message) (indha idathila error kulla irukira array object sring ahh mathapaduthu) like string(message) mathiri
+   }
+
+    res.status(err.statusCode).json({
+        success:false,
+       5. message:  error.message || 'Internal Server Error',
+       
+    })
+}
+}
+
+
+///Handling Cast Error
+
+cast error na get single product la id ku pathila random ahh vera ethavathu data kudutha mongoose atha id ahh convert panna parkum
+so Casr Error adikum
+
+///middlewares/error.js
+module.exports = (err, req, res, next) => {
+    err.statusCode = err.statusCode || 500;
+
+
+if(process.env.NODE_ENV == 'development'){
+    res.status(err.statusCode).json({
+        success:false,
+        message: err.message,
+        stack: err.stack,
+        error: err
+    })
+}
+if(process.env.NODE_ENV == 'production'){
+   let message = err.message;
+   let error = {...err};
+
+   if(err.name == "ValidationError"){
+    message = Object.values(err.errors).map(value => value.message)
+    error = new Error(message)
+   }
+ 1.  if(err.name == 'CastError'){
+    message = `Resource not Found: ${err.path}`;
+    error = new Error(message) 
+   }
+
+    res.status(err.statusCode).json({
+        success:false,
+        message:  error.message || 'Internal Server Error',
+       
+    })
+}
+}
+
+
+////Fixing Error
+production environment la error msg let error la store pannanum
+
+//middlewares/error.js
+if(process.env.NODE_ENV == 'production'){
+   let message = err.message;
+   1.let error = new Error(message);
+
+   if(err.name == "ValidationError"){
+    message = Object.values(err.errors).map(value => value.message)
+    error = new Error(message) 
+   }
+
+   if(err.name == 'CastError'){
+    message = `Resource not Found ${err.path}`;
+    error = new Error(message) 
+   }
+
+    res.status(err.statusCode).json({
+        success:false,
+     message:  error.message || 'Internal Server Error',
+       
+    })
+}
+}
+
+
+////Handled unhandling Rejection Error
+
+catch function call pannalaina unhandling rejection error varum 
+
+config/cofig.env
+PORT = 8000
+NODE_ENV = development
+DB_LOCAL_URI = mongod://127.0.0.1:27017/shoppy
+
+config/database.js
+const mongoose = require('mongoose');
+
+const connectDatabase = ()=>{
+    mongoose.connect(process.env.DB_LOCAL_URI,{
+        useNewUrlParser:true,
+        useUnifiedTopology:true
+    }).then(con=>{
+        console.log(`MongoDB is connected to the host:${con.connection.host}`)
+    })
+}
+
+module.exports = connectDatabase;
+
+
+//server.js
+const app = require('./app');
+const dotenv = require('dotenv');
+const path = require('path');
+const connectDatabase = require('./config/database');
+
+dotenv.config({path:path.join(__dirname,"config/config.env")});
+connectDatabase();
+
+const server = app.listen(process.env.PORT,()=>{
+    console.log(`server listening to the port: ${process.env.PORT} in ${process.env.NODE_ENV}`)
+})
+
+process.on('unhandledRejection',(err)=>{
+    console.log(`Error: ${err.message}`);
+    console.log('Shouting down the server due to unHandled rejection');
+    server.close(()=>{
+        process.exit(1);
+    })
+
+})
+
+
+////Handling Uncaught Exception Error
+
+Theva Illadha field ulla irundhuchina Uncaught Exception Error Varum
+
+const app = require('./app');
+const dotenv = require('dotenv');
+const path = require('path');
+const connectDatabase = require('./config/database');
+
+dotenv.config({path:path.join(__dirname,"config/config.env")});
+connectDatabase();
+
+const server = app.listen(process.env.PORT,()=>{
+    console.log(`server listening to the port: ${process.env.PORT} in ${process.env.NODE_ENV}`)
+})
+
+process.on('unhandledRejection',(err)=>{
+    console.log(`Error: ${err.message}`);
+    console.log('Shouting down the server due to unHandled rejection');
+    server.close(()=>{
+        process.exit(1);
+    })
+
+})
+
+
+1.process.on('uncaughtException',(err)=>{
+    console.log(`Error: ${err.message}`);
+    console.log('Shouting down the server due to uncaughtException Error');
+    server.close(()=>{
+        process.exit(1);
+    })
+})
+
+2.console.log(a);
+
+
+
+////Product Search,Filter & Pagination
+-Search products with name
+-Filter With Catagory and Price
+-Pagination Setup
+
+
+Step :1
+///Search Products with name
+
+utils  Folder kulla apiFeatures.js nu oru file uruvakkanum
+//utils/apiFeatures.js
+class APIFeatures {
+    constructor(query,queryStr){
+        this.query = query;
+        this.queryStr = queryStr;
+    }
+
+    search(){
+        let keyword = this.queryStr.keyword ? {
+            name : {
+                $regex : this.queryStr.keyword,
+                $options:'i'
+            }
+        }:{};
+        this.query.find({...keyword})
+        return this;
+
+    }
+}
+
+module.exports = APIFeatures;
+
+//controllers/productController.js
+
+//Get Search Product - /api/v1/products?keyword=Dell
+exports.getProducts = async (req, res, next) => {
+const apiFeatures = new  APIFeatures(Product.find(),req.query).search();
+
+
+  const products = await apiFeatures.query;
+  res.status(200).json({
+    success: true,
+    count: products.length,
+    products,
+  });
+};
+
+
+////Filter Catagory
+//utils/apiFeatures.js
+class APIFeatures {
+  constructor(query, queryStr) {
+    this.query = query;
+    this.queryStr = queryStr;
+  }
+
+  search() {
+    let keyword = this.queryStr.keyword
+      ? {
+          name: {
+            $regex: this.queryStr.keyword,
+            $options: "i",
+          },
+        }
+      : {};
+    this.query.find({ ...keyword });
+    return this;
+  }
+
+  filter() {
+    const queryStrCopy = { ...this.queryStr };
+
+    //removing fields from query
+
+    const removeFields = ["keyword", "limit", "page"];
+    removeFields.forEach((field) => delete queryStrCopy[field]);
+
+    this.query.find(queryStrCopy);
+    return this;
+  }
+}
+
+module.exports = APIFeatures;
+
+//controllers/productController.js
+
+//Get All Products - /api/v1/products
+//Get Search Product - /api/v1/products?keyword=Dell
+//Get Filter Product - /api/v1/products?category=Headphones
+exports.getProducts = async (req, res, next) => {
+const apiFeatures = new  APIFeatures(Product.find(),req.query).search().filter();
+  const products = await apiFeatures.query;
+  res.status(200).json({
+    success: true,
+    count: products.length,
+    products,
+  });
+};
+
+
+///Filter Price
+//controllers/productController.js
+
+//Get All Products - /api/v1/products
+//Get Search Product - /api/v1/products?keyword=Dell
+//Get Filter Product - /api/v1/products?category=Headphones
+//Get Filter Product Price - /api/v1/products?price[gte]=254
+
+
+exports.getProducts = async (req, res, next) => {
+const apiFeatures = new  APIFeatures(Product.find(),req.query).search().filter();
+  const products = await apiFeatures.query;
+  res.status(200).json({
+    success: true,
+    count: products.length,
+    products,
+  });
+};
+
+
+//utils/apiFeatures.js
+
+ filter() {
+    const queryStrCopy = { ...this.queryStr };
+
+    //removing fields from query
+
+    const removeFields = ["keyword", "limit", "page"];
+    removeFields.forEach(field => delete queryStrCopy[field]);
+
+    let queryStr = JSON.stringify(queryStrCopy);(Json Use Panrathuku karanam ennenea dollar simple add panrathukaga)
+    queryStr = queryStr.replace(/\b(gt|gte|lt|lte)/g, match => `$${match}`)
+
+    this.query.find(JSON.parse(queryStr));
+    return this; 
+  }
+}
+
+////Pagination
+
+//controllers/productControllers.js
+
+//Get All Products - /api/v1/products
+//Get Search Product - /api/v1/products?keyword=Dell
+//Get Filter Product - /api/v1/products?category=Headphones
+//Get Filter Product Price - /api/v1/products?price[gte]=254
+//Pagination data per page - /api/v1/products?page=1
+exports.getProducts = async (req, res, next) => {
+  const resPerPage = 2;
+const apiFeatures = new  APIFeatures(Product.find(),req.query).search().filter().paginate(resPerPage);
+  const products = await apiFeatures.query;
+  res.status(200).json({
+    success: true,
+    count: products.length,
+    products,
+  });
+};
+
+//utils/apiFeatures.js
+  paginate(resPerPage){
+    const currentPage = Number(this.queryStr.page) || 1;
+    const skip = resPerPage * (currentPage - 1)
+    this.query.limit(resPerPage).skip(skip);
+    return this;
+  }
+}
+
+////Creating User Resource
+Creating Api Services for Register,Login
+Authorization/Roles & Permissions For routes
+Forgot & Reset Password with Email
+
+
+////creating User model & Register Api
+
+install Command - npm i validator
+
+
+///models folder la userModel.js file create panrom
+//models/userModel.js
+
+const mongoose = require('mongoose');
+const  validator = require('validator')
+
+const userSchema = new mongoose.Schema({
+    name : {
+        type: String,
+        required: [true,'Please enter name']
+    },
+    email:{
+        type:String,
+        require: [true,'Please enter email'],
+        unique: true,
+        validate:[validator.isEmail,'Please Enter Valid Email Address']
+    },
+    password: {
+        type: String,
+        required: [true,'Please enter Passsword'],
+        maxlength: [6,'Password cannot exceed 6 characters']
+    },
+    avatar:{
+        type: String,
+        required: true
+    },
+    role:{
+        type: String,
+        default: 'user'
+    },
+    resetPasswordToken: String,
+    rsetPasswordTokenExpire: Date,
+    createdAt : {
+        type: Date,
+        default: Date.now
+    }
+
+})
+
+let model = mongoose.model('User',userSchema);
+
+module.exports = model;
+
+///controllers folder kila authController.js file create panrom
+
+const catchAsyncError = require("../middlewares/catchAsyncError");
+const User = require('../models/userModel')
+
+exports.registerUser = catchAsyncError(async (req, res, next)=>{
+
+    const {name, email, password, avatar} = req.body
+
+    const user = await User.create({
+        name,
+        email,
+        password,
+        avatar
+    });
+
+    res.status(201).json({
+        success: true,
+        user
+    });
+})
+
+
+///routes folder kila auth.js file create panrom
+//routes/auth.js
+const express = require('express');
+const { registerUser } = require('../controllers/authController');
+
+const router = express.Router();
+
+router.route('/register').post(registerUser);
+
+module.exports = router;  
+
+
+//app.js 
+const express = require('express');
+const app = express();
+const errorMiddleware = require('./middlewares/error')
+
+app.use(express.json());
+const products =  require('./routes/product')
+1.const auth = require('./routes/auth')
+
+app.use('/api/v1/',products)
+2.app.use('/api/v1/',auth)
+
+app.use(errorMiddleware)
+
+module.exports = app;
+
+
+
+///Hashing Password
+install Command : npm i bcrypt
+
+const mongoose = require('mongoose');
+const  validator = require('validator')
+1.const bcrypt = require('bcrypt')
+
+const userSchema = new mongoose.Schema({
+    name : {
+        type: String,
+        required: [true,'Please enter name']
+    },
+    email:{
+        type:String,
+        require: [true,'Please enter email'],
+        unique: true,
+        validate:[validator.isEmail,'Please Enter Valid Email Address']
+    },
+    password: {
+        type: String,
+        required: [true,'Please enter Passsword'],
+        maxlength: [6,'Password cannot exceed 6 characters']
+    },
+    avatar:{
+        type: String,
+        required: true
+    },
+    role:{
+        type: String,
+        default: 'user'
+    },
+    resetPasswordToken: String,
+    rsetPasswordTokenExpire: Date,
+    createdAt : {
+        type: Date,
+        default: Date.now
+    }
+
+})
+
+2.userSchema.pre('save', async function (next){
+    this.password = await bcrypt.hash(this.password, 10) (10 ingathu salt )
+})
+
+let model = mongoose.model('User',userSchema);
+
+module.exports = model;
+
+
+///generate JSON web Token
+
+
+1.open secret key genrator website and choose any one secret key
+
+2.npm i jsonwebtoken
+
+//config/config.env
+PORT = 8000
+NODE_ENV = development
+DB_LOCAL_URI = mongodb://127.0.0.1:27017/shoppy
+1.JWT_SECRET=6CCLCx5uDJ
+2.JWT_EXPIRES_TIME=7d
+
+//models/userModel.js
+const mongoose = require('mongoose');
+const  validator = require('validator')
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
+const userSchema = new mongoose.Schema({
+    name : {
+        type: String,
+        required: [true,'Please enter name']
+    },
+    email:{
+        type:String,
+        require: [true,'Please enter email'],
+        unique: true,
+        validate:[validator.isEmail,'Please Enter Valid Email Address']
+    },
+    password: {
+        type: String,
+        required: [true,'Please enter Passsword'],
+        maxlength: [6,'Password cannot exceed 6 characters']
+    },
+    avatar:{
+        type: String,
+        required: true
+    },
+    role:{
+        type: String,
+        default: 'user'
+    },
+    resetPasswordToken: String,
+    rsetPasswordTokenExpire: Date,
+    createdAt : {
+        type: Date,
+        default: Date.now
+    }
+
+})
+
+userSchema.pre('save', async function (next){
+    this.password = await bcrypt.hash(this.password, 10)
+})
+
+1.userSchema.methods.getJwtToken = function(){
+    return jwt.sign({id:this.id},process.env.JWT_SECRET,{
+         expiresIn: process.env.JWT_EXPIRES_TIME
+    })
+}
+
+let model = mongoose.model('User',userSchema);
+
+module.exports = model;
+
+///controllers/authController.js
+const catchAsyncError = require("../middlewares/catchAsyncError");
+const User = require('../models/userModel')
+
+exports.registerUser = catchAsyncError(async (req, res, next)=>{
+
+    const {name, email, password, avatar} = req.body
+
+    const user = await User.create({
+        name,
+        email,
+        password,
+        avatar
+    });
+
+ 1. const token = user.getJwtToken(); 
+
+    res.status(201).json({
+        success: true,
+        user,
+        token
+        
+    });
+})
+
+
+Creating Login Api
+
+///controllers/authController.js
+const catchAsyncError = require("../middlewares/catchAsyncError");
+const User = require('../models/userModel');
+const ErrorHandler = require('../utils/errorHandler');
+const sendToken = require('../utils/jwt');
+
+exports.registerUser = catchAsyncError(async (req, res, next)=>{
+
+    const {name, email, password, avatar} = req.body
+
+    const user = await User.create({
+        name,
+        email,
+        password,
+        avatar
+    });
+
+    sendToken(user, 201, res)
+})
+
+1.exports.loginUser = catchAsyncError(async (req, res, next)=>{
+    const {email,password} = req.body
+
+    if(!email || !password){
+        return next(new ErrorHandler('Please Enter Email and Password',400))
+    }
+
+    //finding the user database
+   const user = await User.findOne({email}).select('+password');
+   if(!user){
+    return next(new ErrorHandler('Please Enter Email and Password',401))
+   }
+
+   if(!await user.isValidPassword(password)){
+    return next(new ErrorHandler('Please Enter Email and Password',401))
+   }
+   sendToken(user, 201, res)
+})
+
+///utils/jwt.js
+const sendToken = (user, statusCode, res) => {
+
+    //Creating JWT Token
+    const token = user.getJwtToken();
+
+    res.status(statusCode).json({
+        success: true,
+        token,
+        user
+    })
+}
+
+module.exports = sendToken;
+
+//models/userModel.js
+const mongoose = require('mongoose');
+const  validator = require('validator')
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
+const userSchema = new mongoose.Schema({
+    name : {
+        type: String,
+        required: [true,'Please enter name']
+    },
+    email:{
+        type:String,
+        require: [true,'Please enter email'],
+        unique: true,
+        validate:[validator.isEmail,'Please Enter Valid Email Address']
+    },
+    password: {
+        type: String,
+        required: [true,'Please enter Passsword'],
+        maxlength: [6,'Password cannot exceed 6 characters'],
+        select: false
+    },
+    avatar:{
+        type: String,
+        required: true
+    },
+    role:{
+        type: String,
+        default: 'user'
+    },
+    resetPasswordToken: String,
+    rsetPasswordTokenExpire: Date,
+    createdAt : {
+        type: Date,
+        default: Date.now
+    }
+
+})
+
+userSchema.pre('save', async function (next){
+    this.password = await bcrypt.hash(this.password, 10)
+})
+
+userSchema.methods.getJwtToken = function(){
+    return jwt.sign({id:this.id},process.env.JWT_SECRET,{
+         expiresIn: process.env.JWT_EXPIRES_TIME
+    })
+}
+
+userSchema.methods.isValidPassword = async function(enteredPassword){
+
+ return await bcrypt.compare(enteredPassword,this.password)
+}
+
+let model = mongoose.model('User',userSchema);
+
+module.exports = model;
+
+//routes/auth.js
+const express = require('express');
+const { registerUser, loginUser } = require('../controllers/authController');
+
+const router = express.Router();
+
+router.route('/register').post(registerUser);
+1.router.route('/login').post(loginUser);
+
+module.exports = router;  
+
+//////Set Cookies
+
+///config/config.env
+
+PORT = 8000
+NODE_ENV = development
+DB_LOCAL_URI = mongodb://127.0.0.1:27017/shoppy
+JWT_SECRET=6CCLCx5uDJ
+JWT_EXPIRES_TIME=7d
+1.COOKIE_EXPIRES_TIME=7
+
+
+//utils/jwt.js
+const sendToken = (user, statusCode, res) => {
+
+    //Creating JWT Token
+    const token = user.getJwtToken();
+
+    //setting cookies
+    const options = {
+        expires: new Date(
+            Date.now() + process.env.COOKIE_EXPIRES_TIME *24*60*60*1000
+        ),
+        httpOnly: true,
+    }
+
+    res.status(statusCode)
+    .cookie('token', token, options)
+    .json({
+        success: true,
+        token,
+        user
+    })
+}
+
+module.exports = sendToken;
+
+
+///Protecting Routes from Unauthorized User
+
+install command
+
+npm i cookie-parser
+
+///middlewares/authenticate.js
+const ErrorHandler = require("../utils/errorHandler");
+const User = require('../models/userModel')
+const catchAsyncError = require("./catchAsyncError");
+const jwt = require('jsonwebtoken');
+
+
+exports.isAuthenticatedUser = catchAsyncError( async (req, res, next)=>{
+    const { token } = req.cookies;
+
+    if( !token ){
+        return next(new ErrorHandler('Login first to handle this resource'))
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    req.user = await User.findById(decoded.id)
+    next();
+})
+
+//app.js
+const express = require('express');
+const app = express();
+const errorMiddleware = require('./middlewares/error')
+1.const cookieParser = require('cookie-parser')
+
+app.use(express.json());
+2.app.use(cookieParser());
+
+const products =  require('./routes/product')
+const auth = require('./routes/auth')
+
+app.use('/api/v1/',products)
+app.use('/api/v1/',auth)
+
+app.use(errorMiddleware)
+
+module.exports = app;
+
+//routes/product.js
+const express = require('express');
+const { getProducts, newProduct, getSingleProduct, updateProduct, deleteProduct } = require('../controllers/productController');
+const router = express.Router();
+const {isAuthenticatedUser} = require('../middlewares/authenticate');
+
+router.route('/products').get(isAuthenticatedUser,getProducts);
+router.route('/product/new').post(newProduct);
+router.route('/product/:id')
+                           .get(getSingleProduct)
+                           .put(updateProduct)
+                           .delete(deleteProduct)
+                        
+module.exports = router
+
+
+step :15//////Authorize User Roles
+
+Admin or User
+
+///middlewares/authenticate.js
+const ErrorHandler = require("../utils/errorHandler");
+const User = require('../models/userModel')
+const catchAsyncError = require("./catchAsyncError");
+const jwt = require('jsonwebtoken');
+
+
+exports.isAuthenticatedUser = catchAsyncError( async (req, res, next)=>{
+    const { token } = req.cookies;
+
+    if( !token ){
+        return next(new ErrorHandler('Login first to handle this resource'))
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    req.user = await User.findById(decoded.id)
+    next();
+})
+
+1.exports.authorizeRoles = (...roles) => {
+    return (req, res, next) => {
+        if(!roles.includes(req.user.role)){
+            return next(new ErrorHandler(`Role ${req.user.role} is not allowed`,400))
+        }
+        next()
+    }
+}
+
+//routes/product.js
+const express = require('express');
+const { getProducts, newProduct, getSingleProduct, updateProduct, deleteProduct } = require('../controllers/productController');
+const router = express.Router();
+const {isAuthenticatedUser, authorizeRoles} = require('../middlewares/authenticate');
+
+router.route('/products').get(isAuthenticatedUser,getProducts);
+1.router.route('/product/new').post(isAuthenticatedUser, authorizeRoles('admin'), newProduct);
+router.route('/product/:id')
+                           .get(getSingleProduct)
+                           .put(updateProduct)
+                           .delete(deleteProduct)
+                        
+module.exports = router
+
+step:16 Logout Api
+
+///controllers/authController.js
+exports.logoutUser = (req, res, next) => {
+    res.cookie('token',null,{
+        expires: new Date(Date.now()),
+        httpOnly: true
+    })
+    .status(200)
+    .json({
+        success: true,
+        message: "Loggedout"
+    })
+}
+
+///routes/auth.js
+const express = require('express');
+const { registerUser, loginUser, logoutUser } = require('../controllers/authController');
+
+const router = express.Router();
+
+router.route('/register').post(registerUser);
+router.route('/login').post(loginUser);
+router.route('/logout').get(logoutUser);
+
+module.exports = router;  
+
+step:
+///Adding User in Product Schema
+
+Endha user i meen endha admin Product add panranganu therinjika andha admin oda id ahh product details ahh add panrom
+
+//models/productModel.js
+const mongoose = require('mongoose');
+
+const productSchema = new mongoose.Schema({
+    name : {
+        type : String,
+        required : [true,"Please Enter Product Name"],
+        trim : true,
+        maxLength : [100,"Product Name cannot exceed 100 Characters"]  
+      },
+      price:{
+        type : Number,
+        default:0.0
+      },
+      description : {
+        type : String,
+        required : [true,"please enter product descripton"]
+      },
+      ratings : {
+        type : String,
+        default:0
+      },
+      images :[
+        {
+            image:{
+                type : String,
+                required: true
+            }
+        }
+      ],
+      category:{
+        type : String,
+        required:[true,"Please enter product category"],
+        enum:{
+            values :[
+                'Electronics',
+                'Mobile Phones',
+                'Laptops',
+                'Accessories',
+                'Headphones',
+                'Food',
+                'Books',
+                'Cloths/Shoes',
+                'Beauty/Health',
+                'Sports',
+                'outdoor',
+                'Home'
+            ],
+            message : "Please select correct category"
+        }
+      },
+      seller:{
+        type:String,
+        required : [true, "Please enter product seller"]
+      },
+      stock:{
+        type : Number,
+        required :[true,"Please Enter Product Stock"],
+        maxLength:[20,'Product stock cannot exceed 20']
+      },
+      numOfReviews:{
+        type:Number,
+        default:0
+      },
+      reviews:[
+        {
+            name:{
+                type: String,
+                required:true
+            },
+            rating:{
+                type : String,
+                required:true
+            },
+            comment:{
+                type : String,
+                required: true
+            }
+        }
+      ],
+      user: {
+     1.   type : mongoose.Schema.Types.ObjectId
+      },
+      createdAt:{
+        type:Date,
+        default: Date.now()
+      }
+
+})
+
+let schema = mongoose.model('product',productSchema)
+
+module.exports = schema
+
+//controllers/productController.js
+//Create Product - /api/v1/product/new
+exports.newProduct = catchAsyncError (async (req,res,next)=>{
+
+ 1. req.body.user = req.user.id;
+  const product = await Product.create(req.body);
+  res.status(201).json({
+     success: true,
+     product
+  })
+ });
+
+
+step:
+Generate Reset Password Token
+Forgot Password API with Email
+
+Token Generate panni mail anuparathu mattum kuduthirukuthu indha step la password reset token
+
+install command : npm i crypto,npm i nodemailer (First Install Pannikanum)
+
+//step:1
+///models/userModel.js
+const mongoose = require('mongoose');
+const  validator = require('validator')
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
+1.const crypto = require('crypto')
+const userSchema = new mongoose.Schema({
+    name : {
+        type: String,
+        required: [true,'Please enter name']
+    },
+    email:{
+        type:String,
+        require: [true,'Please enter email'],
+        unique: true,
+        validate:[validator.isEmail,'Please Enter Valid Email Address']
+    },
+    password: {
+        type: String,
+        required: [true,'Please enter Passsword'],
+        maxlength: [6,'Password cannot exceed 6 characters'],
+        select: false
+    },
+    avatar:{
+        type: String,
+        required: true
+    },
+    role:{
+        type: String,
+        default: 'user'
+    },
+    resetPasswordToken: String,
+    resetPasswordTokenExpire: Date,
+    createdAt : {
+        type: Date,
+        default: Date.now
+    }
+
+})
+
+userSchema.pre('save', async function (next){
+ 2.   if(!this.isModified('password')){
+        next();
+    }
+    this.password = await bcrypt.hash(this.password, 10){reset password adikirappo indha hash function use agathu athuku if condition use panrom}
+})
+
+userSchema.methods.getJwtToken = function(){
+    return jwt.sign({id:this.id},process.env.JWT_SECRET,{
+         expiresIn: process.env.JWT_EXPIRES_TIME
+    })
+}
+
+userSchema.methods.isValidPassword = async function(enteredPassword){
+
+ return await bcrypt.compare(enteredPassword,this.password)
+}
+
+3.userSchema.methods.getResetToken = function(){
+    //Generate Token
+    const token = crypto.randomBytes(20).toString('hex');
+
+    //Generate Hash and set to resetPasswordToken
+    this.resetPasswordToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    //set token expire time
+    this.resetPasswordTokenExpire = Date.now() + 30 * 60 * 1000;
+
+    return token
+}
+
+let model = mongoose.model('User',userSchema);
+
+module.exports = model;
+
+//step2:
+//controllers/authController.js
+const catchAsyncError = require("../middlewares/catchAsyncError");
+const User = require('../models/userModel');
+const sendEmail = require("../utils/email");
+const ErrorHandler = require('../utils/errorHandler');
+2.const sendToken = require('../utils/jwt');
+
+exports.registerUser = catchAsyncError(async (req, res, next)=>{
+
+    const {name, email, password, avatar} = req.body
+
+    const user = await User.create({
+        name,
+        email,
+        password,
+        avatar
+    });
+
+    sendToken(user, 201, res)
+})
+
+exports.loginUser = catchAsyncError(async (req, res, next)=>{
+    const {email,password} = req.body
+
+    if(!email || !password){
+        return next(new ErrorHandler('Please Enter Email and Password',400))
+    }
+
+    //finding the user database
+   const user = await User.findOne({email}).select('+password');
+   if(!user){
+    return next(new ErrorHandler('Please Enter Email and Password',401))
+   }
+
+   if(!await user.isValidPassword(password)){
+    return next(new ErrorHandler('Please Enter Email and Password',401))
+   }
+   sendToken(user, 201, res)
+})
+
+exports.logoutUser = (req, res, next) => {
+    res.cookie('token',null,{
+        expires: new Date(Date.now()),
+        httpOnly: true
+    })
+    .status(200)
+    .json({
+        success: true,
+        message: "Loggedout"
+    })
+}
+
+2.exports.forgotPassword = catchAsyncError( async (req, res, next)=>{
+   const user = await User.findOne({email: req.body.email});
+
+   if(!user){
+    return next(new ErrorHandler('User not found with this email',404))
+   }
+
+   const resetToken = user.getResetToken();
+
+   await user.save({validateBeforeSave: false})
+
+   //Create reset url
+   const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/password/reset/${resetToken}`;
+
+   const message = `Your password reset url is as follows \n\n
+   ${resetUrl}\n\n If you have not requested this email, then ignore it.`
+
+   try{
+         2.sendEmail({
+              email:user.email,
+              subject:"shoppy password Recovery",
+              message
+         })
+         res.status(200).json({
+            success: true,
+            message:`Email sent to ${user.email}`
+         })
+   }catch(error){
+    user.resetPasswordToken = undefined;
+    user.rsetPasswordTokenExpire = undefined;
+    await user.save({validateBeforeSave: false});
+     return next(new ErrorHandler(error.message),500)
+   }
+})
+
+ 
+
+//step:3 sendMail uruvakki export Pannanum
+
+///utils/email.js
+
+const nodemailer =  require('nodemailer')
+
+const sendEmail = async options => {
+    const transport = {
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        auth:{
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS 
+        }
+    };
+
+const transporter = nodemailer.createTransport(transport);
+
+const message = {
+    from: `${process.env.SMTP_FROM_NAME} <${process.env.SMTP_FROM_EMAIL}>`,
+    to: options.email,
+    subject: options.subject,
+    text:options.message
+}
+await transporter.sendMail(message)
+
+
+}
+
+module.exports = sendEmail
+
+//step :4
+mailtrap la account open panni athila inbox ku poi nodemailer choose panni antha configuration ahh config.js la use pannikanum
+
+//config/config.env
+PORT = 8000
+NODE_ENV = development
+DB_LOCAL_URI = mongodb://127.0.0.1:27017/shoppy
+JWT_SECRET=6CCLCx5uDJ
+JWT_EXPIRES_TIME=7d
+COOKIE_EXPIRES_TIME=7
+SMTP_HOST=smtp.mailtrap.io
+SMTP_PORT=2525
+SMTP_USER=dd9dab8137ca1d
+SMTP_PASS=100a7d1168dff3
+SMTP_FROM_NAME=shoppy
+SMTP_FROM_EMAIL=noreply@jvlcart.com
+
+//step:5 
+//routes/auth.js
+const express = require('express');
+const { registerUser, loginUser, logoutUser, forgotPassword } = require('../controllers/authController');
+
+const router = express.Router();
+
+router.route('/register').post(registerUser);
+router.route('/login').post(loginUser);
+router.route('/logout').get(logoutUser);
+router.route('/password/forgot').post(forgotPassword);
+
+
+module.exports = router;  
+
+
+/////Reset Password Api
+
+
+step:1
+//controllers/authController.js
+const catchAsyncError = require("../middlewares/catchAsyncError");
+const User = require('../models/userModel');
+const sendEmail = require("../utils/email");
+const ErrorHandler = require('../utils/errorHandler');
+3.const sendToken = require('../utils/jwt');
+2.const crypto = require('crypto')
+
+exports.registerUser = catchAsyncError(async (req, res, next)=>{
+
+    const {name, email, password, avatar} = req.body
+
+    const user = await User.create({
+        name,
+        email,
+        password,
+        avatar
+    });
+
+    sendToken(user, 201, res)
+})
+
+exports.loginUser = catchAsyncError(async (req, res, next)=>{
+    const {email,password} = req.body
+
+    if(!email || !password){
+        return next(new ErrorHandler('Please Enter Email and Password',400))
+    }
+
+    //finding the user database
+   const user = await User.findOne({email}).select('+password');
+   if(!user){
+    return next(new ErrorHandler('Please Enter Email and Password',401))
+   }
+
+   if(!await user.isValidPassword(password)){
+    return next(new ErrorHandler('Please Enter Email and Password',401))
+   }
+   sendToken(user, 201, res)
+})
+
+exports.logoutUser = (req, res, next) => {
+    res.cookie('token',null,{
+        expires: new Date(Date.now()),
+        httpOnly: true
+    })
+    .status(200)
+    .json({
+        success: true,
+        message: "Loggedout"
+    })
+}
+
+exports.forgotPassword = catchAsyncError( async (req, res, next)=>{
+   const user = await User.findOne({email: req.body.email});
+
+   if(!user){
+    return next(new ErrorHandler('User not found with this email',404))
+   }
+
+   const resetToken = user.getResetToken();
+
+   await user.save({validateBeforeSave: false})
+
+   //Create reset url
+   const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/password/reset/${resetToken}`;
+
+   const message = `Your password reset url is as follows \n\n
+   ${resetUrl}\n\n If you have not requested this email, then ignore it.`
+
+   try{
+         sendEmail({
+              email:user.email,
+              subject:"shoppy password Recovery",
+              message
+         })
+         res.status(200).json({
+            success: true,
+            message:`Email sent to ${user.email}`
+         })
+   }catch(error){
+    user.resetPasswordToken = undefined;
+    user.rsetPasswordTokenExpire = undefined;
+    await user.save({validateBeforeSave: false});
+     return next(new ErrorHandler(error.message),500)
+   }
+})
+
+2.exports.resetPassword = catchAsyncError(async (req, res, next)=>{
+   const resetPasswordToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+
+   const user = await User.findOne({
+    resetPasswordToken,
+    resetPasswordTokenExpire: {
+        $gt : Date.now()
+    }
+   })
+
+   if(!user){
+    return next(new ErrorHandler('Password  reset token is invalid or expired'));
+   }
+   if( req.body.password !== req.body.confirmPassword){
+    return next(new ErrorHandler('Password does not Match'));
+   }
+   user.password = req.body.password;
+   user.resetPasswordToken = undefined;
+   user.resetPasswordTokenExpire = undefined;
+   await user.save({validateBeforeSave: false})
+ 
+   sendToken(user, 201, res)
+})
+
+step:2
+//routes/auth.js
+const express = require('express');
+const { registerUser, loginUser, logoutUser, forgotPassword, resetPassword } = require('../controllers/authController');
+
+const router = express.Router();
+
+router.route('/register').post(registerUser);
+router.route('/login').post(loginUser);
+router.route('/logout').get(logoutUser);
+router.route('/password/forgot').post(forgotPassword);
+router.route('/password/reset/:token').post(resetPassword);
+
+
+module.exports = router;
+
+
+////Error Handling User API Services
+
+Process environment la orey Mail id kudutha duplicate Mail id kudukararthuku error handle panrathuku below code payanpadithikalam
+
+///middlewares/error.js
+module.exports = (err, req, res, next) => {
+    err.statusCode = err.statusCode || 500;
+
+
+if(process.env.NODE_ENV == 'development'){
+    res.status(err.statusCode).json({
+        success:false,
+        message: err.message,
+        stack: err.stack,
+        error: err
+    })
+}
+if(process.env.NODE_ENV == 'production'){
+   let message = err.message;
+   let error = new Error(message);
+
+   if(err.name == "ValidationError"){
+    message = Object.values(err.errors).map(value => value.message)
+    error = new Error(message) 
+   }
+
+   if(err.name == 'CastError'){
+    message = `Resource not Found ${err.path}`;
+    error = new Error(message) 
+   }
+
+
+1.if (err.code === 11000) {
+    let message = `Duplicate ${Object.keys(err.keyValue)} error`;
+    let duplicateError = new Error(message);
+    // Preserve the original stack trace
+    duplicateError.stack = err.stack;
+    // You might also want to include the original error details in the new error object
+    duplicateError.originalError = err;
+    error = duplicateError;
+}
+
+
+
+    res.status(err.statusCode).json({
+        success:false,
+     message:  error.message || 'Internal Server Error',
+       
+    })
+}
+}
+
+
+///JSONWebTokenError and TokenExpiredError
+
+step 1:
+//middlewares/error.js
+module.exports = (err, req, res, next) => {
+    err.statusCode = err.statusCode || 500;
+
+
+if(process.env.NODE_ENV == 'development'){
+    res.status(err.statusCode).json({
+        success:false,
+        message: err.message,
+        stack: err.stack,
+        error: err
+    })
+}
+if(process.env.NODE_ENV == 'production'){
+   let message = err.message;
+   let error = new Error(message);
+
+   if(err.name == "ValidationError"){
+    message = Object.values(err.errors).map(value => value.message)
+    error = new Error(message) 
+   }
+
+   if(err.name == 'CastError'){
+    message = `Resource not Found ${err.path}`;
+    error = new Error(message) 
+   }
+
+
+if (err.code === 11000) {
+    let message = `Duplicate ${Object.keys(err.keyValue)} error`;
+    let duplicateError = new Error(message);
+    // Preserve the original stack trace
+    duplicateError.stack = err.stack;
+    // You might also want to include the original error details in the new error object
+    duplicateError.originalError = err;
+    error = duplicateError;
+}
+
+1.if(err.name == 'JSONWebTokenError'){
+    let message = `JSON Web Token is invalid. Try again`;
+    error = new Error(message)
+}
+
+2.if(err.name == 'TokenExpiredError'){
+    let message = `JSON Web Token is expired. Try again`;
+    error = new Error(message)
+}
+
+
+
+    res.status(err.statusCode).json({
+        success:false,
+     message:  error.message || 'Internal Server Error',
+       
+    })
+}
+}
+
+
+
+//////Authenticated User API Services
+
+Get,Update User profile API
+change password API
+Admin API services for User Management 
+
+Get User Profile
+step 1:
+//controllers/authController.js
+
+//Get User Profile - /api/v1/myprofile
+
+exports.getUserProfile = catchAsyncError(async (req, res, next)=>{
+    const user = await User.findById(req.user.id)
+    res.status(200).json({
+        success:true,
+        user
+    })
+})
+
+step 2:
+//routes/auth.js
+
+const express = require('express');
+const { registerUser, loginUser, logoutUser, forgotPassword, resetPassword, getUserProfile } = require('../controllers/authController');
+
+const router = express.Router();
+const { isAuthenticatedUser } = require('../middlewares/authenticate')
+
+router.route('/register').post(registerUser);
+router.route('/login').post(loginUser);
+router.route('/logout').get(logoutUser);
+router.route('/password/forgot').post(forgotPassword);
+router.route('/password/reset/:token').post(resetPassword);
+1.router.route('/myprofile').get(isAuthenticatedUser, getUserProfile);
+
+
+module.exports = router; 
+
+
+/////Change Password
+
+step 1:
+//controllers/authController.js
+//Change Password
+
+exports.changePassword = catchAsyncError(async (req, res, next) =>{
+    const user = await User.findById(req.user.id).select('+password');
+
+    //check old password
+    if(!await user.isValidPassword(req.body.oldPassword)){
+        return next(new ErrorHandler('Old password is incorrect', 401))
+    }
+
+    //assigning new password 
+    user.password = req.body.password;
+    await user.save();
+    res.status(200).json({
+        success:true,
+    })
+})
+
+//rotes/auth.js
+const express = require('express');
+const { registerUser, loginUser, logoutUser, forgotPassword, resetPassword, getUserProfile, changePassword} = require('../controllers/authController');
+
+const router = express.Router();
+const { isAuthenticatedUser } = require('../middlewares/authenticate')
+
+router.route('/register').post(registerUser);
+router.route('/login').post(loginUser);
+router.route('/logout').get(logoutUser);
+router.route('/password/forgot').post(forgotPassword);
+router.route('/password/reset/:token').post(resetPassword);
+router.route('/password/change').put(isAuthenticatedUser, changePassword);
+1.router.route('/myprofile').get(isAuthenticatedUser, getUserProfile);
+
+
+
+module.exports = router;
+
+step:15
+////Update Profile
+
+step :
+controllers/authController.js
+//Update Profile -/api/v1/update
+exports.updateProfile = catchAsyncError(async (req, res, next) =>{
+    const newUserData ={
+        name: req.body.name,
+        email:req.body.email
+    }
+
+    const user = await User.findByIdAndUpdate(req.user.id,newUserData,{
+        new: true,
+        runValidators: true,
+    })
+    res.status(200).json({
+        success: true,
+        user
+    })
+})
+step:
+//routes/auth.js
+const express = require('express');
+const { registerUser, loginUser, logoutUser, forgotPassword, resetPassword, getUserProfile, changePassword, updateProfile} = require('../controllers/authController');
+
+const router = express.Router();
+const { isAuthenticatedUser } = require('../middlewares/authenticate')
+
+router.route('/register').post(registerUser);
+router.route('/login').post(loginUser);
+router.route('/logout').get(logoutUser);
+router.route('/password/forgot').post(forgotPassword);
+router.route('/password/reset/:token').post(resetPassword);
+router.route('/password/change').put(isAuthenticatedUser, changePassword);
+router.route('/myprofile').get(isAuthenticatedUser, getUserProfile);
+router.route('/update').put(isAuthenticatedUser, updateProfile);
+
+
+
+module.exports = router;  
+
+
+/////Admin Routes
+
+
+step 1:
+//controllers/authControllers.js
+//Admin: Get All Users - /api/v1/admin/users
+
+exports.getAllUsers = catchAsyncError(async (req, res, next) =>{
+  const users = await User.find();
+  res.status(200).json({
+    success: true,
+    users
+  })
+})
+
+//Admin: Get Specific User - /api/v1/admin/user/:id
+exports.getUser = catchAsyncError(async (req, res, next) =>{
+    const user = await  User.findById(req.params.id);
+
+    if(!user){
+        return next(new ErrorHandler(`User not found with this id ${req.params.id}`))
+    }
+    res.status(200).json({
+        success: true,
+        user
+      })
+
+})
+
+//Admin: Update User - /api/v1/admin/user/:id
+
+exports.updateUser = catchAsyncError(async (req, res, next) =>{
+    const newUserData ={
+        name: req.body.name,
+        email:req.body.email,
+        role:req.body.role
+    }
+
+    const user = await User.findByIdAndUpdate(req.params.id,newUserData,{
+        new: true,
+        runValidators: true,
+    })
+    res.status(200).json({
+        success: true,
+        user
+    })
+})
+
+//Admin: Delete User - /api/v1/admin/user/:id
+exports.deleteUser = catchAsyncError(async (req, res, next) =>{
+    const user = await  User.findById(req.params.id);
+    if(!user){
+        return next(new ErrorHandler(`User not found with this id ${req.params.id}`))
+    }
+    await user.deleteOne({ _id: req.params.id });
+
+    res.status(200).json({
+        success: true,
+        
+    })
+
+})
+
+step 2:
+//routes/auth.js
+
+router.route('/admin/users').get(isAuthenticatedUser, authorizeRoles('admin'), getAllUsers);
+router.route('/admin/user/:id').get(isAuthenticatedUser, authorizeRoles('admin'), getUser)
+                               .put(isAuthenticatedUser, authorizeRoles('admin'), updateUser)
+                               .delete(isAuthenticatedUser, authorizeRoles('admin'), deleteUser);
+
+step 3:
+routes/product.js
+
+
+// Admin Routes
+router.route('/admin/product/new').post(isAuthenticatedUser, authorizeRoles('admin'), newProduct);
+
+
+////Order API Services
+ 1.Create Order API
+ 2.Get single Order API
+ 3.Get User orders API
+ 4.Admin Get,Update,Delete Orders API
+
+
+///Create Order Model
+
+Create Order Api
+step :1
+//models/orderModel.js
+
+const mongoose = require('mongoose');
+
+const orderSchema = mongoose.Schema({
+    shippingInfo: {
+        address: {
+            type: String,
+            required: true
+        },
+        country: {
+            type: String,
+            required: true
+        },
+        city: { 
+            type: String,
+            required: true
+        },
+        phoneNo: {
+            type: String,
+            required: true
+        },
+        postalCode: {
+            type: String,
+            required: true
+        }
+    },
+    user: {
+        type: mongoose.SchemaTypes.ObjectId,
+        required: true,
+        ref: 'User'
+    },
+    orderItems: [{
+        name: {
+            type: String,
+            required: true
+        },
+        quantity: {
+            type: Number,
+            required: true
+        },
+        image: {
+            type: String,
+            required: true
+        },
+        price: {
+            type: Number,
+            required: true
+        },
+        product: {
+            type: mongoose.SchemaTypes.ObjectId,
+            required: true,
+            ref: 'Product'
+        }
+
+    }],
+    itemsPrice: {
+        type: Number,
+        required: true,
+        default: 0.0
+    },
+    taxPrice: {
+        type: Number,
+        required: true,
+        default: 0.0
+    },
+    shippingPrice: {
+        type: Number,
+        required: true,
+        default: 0.0
+    },
+    totalPrice: {
+        type: Number,
+        required: true,
+        default: 0.0
+    },
+    paymentInfo: {
+        id: {
+            type: String,
+            required: true
+        },
+        status: {
+            type: String,
+            required: true
+        }
+    },
+    paidAt: {
+        type: Date
+    },
+    deliveredAt: {
+        type: Date
+    },
+    orderStatus: {
+        type: String,
+        required: true,
+        default: 'Processing'
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+})
+
+let orderModel = mongoose.model('Order', orderSchema);
+
+module.exports = orderModel;
+
+step :2
+//controllers/orderController.js
+const catchAsyncError = require('../middlewares/catchAsyncError')
+const Order = require('../models/orderModel')
+
+//Create New Order - api/v1/order/new
+
+exports.newOrder = catchAsyncError(async (req, res, next)=>{
+    const {
+        orderItems,
+        shippingInfo,
+        itemsPrice,
+        taxPrice,
+        shippingPrice,
+        totalPrice,
+        paymentInfo
+    }= req.body;
+
+
+const order = await Order.create({
+    orderItems,
+    shippingInfo,
+    itemsPrice,
+    taxPrice,
+    shippingPrice,
+    totalPrice,
+    paymentInfo,
+    paidAt: Date.now(),
+    user:req.user.id
+})
+res.status(200).json({
+    success: true,
+    order
+})
+})
+ 
+step:3
+//routes/order.js
+const express = require('express');
+const { newOrder } = require('../controllers/orderController');
+const {isAuthenticatedUser}  = require('../middlewares/authenticate')
+
+const router = express.Router();
+
+
+router.route('/order/new').post(isAuthenticatedUser,newOrder);
+module.exports = router;
+
+step4:
+//app.js
+
+const express = require('express');
+const app = express();
+const errorMiddleware = require('./middlewares/error')
+const cookieParser = require('cookie-parser')
+
+app.use(express.json());
+app.use(cookieParser());
+
+const products =  require('./routes/product')
+const auth = require('./routes/auth')
+const order = require('./routes/order') 
+
+app.use('/api/v1/',products)
+app.use('/api/v1/',auth)
+app.use('/api/v1/',order)
+
+app.use(errorMiddleware)
+
+module.exports = app;
+
+
+postman Create Order
+{
+    "orderItems":[
+        {
+            "product":"6396012983d7fc9e685c72e7",
+            "name":"Dell Inspiron 3511 Laptop",
+            "price":440.57,
+            "image":"product_7878756.jpg",
+            "quantity":1
+        }
+    ],
+    "itemsPrice":2.75,
+    "taxPrice":0.14,
+    "shippingPrice":25,
+    "totalPrice":469.07,
+    "shippingInfo":{
+        "address":"345 Main road",
+        "city":"Chennai",
+        "country":"India",
+        "postalCode":"600478",
+        "phoneNo":"8072886792"
+},
+    "paymentInfo":{
+        "id":"2548484314",
+        "status":"success"
+    }
+}
+
+
+//////Get Single Order
+step 1:
+controllers/orderController.js
+
+
+const catchAsyncError = require('../middlewares/catchAsyncError')
+const Order = require('../models/orderModel')
+const ErrorHandler = require("../utils/errorHandler");
+
+//Create New Order - api/v1/order/new
+
+exports.newOrder = catchAsyncError(async (req, res, next)=>{
+    const {
+        orderItems,
+        shippingInfo,
+        itemsPrice,
+        taxPrice,
+        shippingPrice,
+        totalPrice,
+        paymentInfo
+    }= req.body;
+
+
+const order = await Order.create({
+    orderItems,
+    shippingInfo,
+    itemsPrice,
+    taxPrice,
+    shippingPrice,
+    totalPrice,
+    paymentInfo,
+    paidAt: Date.now(),
+    user:req.user.id
+})
+res.status(200).json({
+    success: true,
+    order
+})
+})
+
+//1.Get Single Order - api/v1/order/:id
+
+exports.getSingleOrder = catchAsyncError(async (req, res, next)=>{
+    const order = await Order.findById(req.params.id).populate('user','name email')
+
+    if(!order){
+        return next(new ErrorHandler(`Order not found wit this id:${req.params.id}`,404))
+    }
+    res.status(200).json({
+        success: true,
+        order
+    })
+
+
+})
+
+
+ 
+
+step 2:
+//routes/order.js
+const express = require('express');
+const { newOrder, getSingleOrder } = require('../controllers/orderController');
+const {isAuthenticatedUser}  = require('../middlewares/authenticate')
+
+const router = express.Router();
+
+
+router.route('/order/new').post(isAuthenticatedUser,newOrder);
+router.route('/order/:id').get(isAuthenticatedUser,getSingleOrder);
+module.exports = router;
+
+
+steps:
+//Get Loggedin User Orders - /api/v1/myorders
+
+//controllers/orderController.js
+
+exports.myOrders = catchAsyncError(async (req, res, next)=>{
+    const orders = await Order.find({user: req.user.id});
+
+    res.status(200).json({
+        success: true,
+        orders
+    })
+})
+
+//routes/order.js
+const express = require('express');
+const { newOrder, getSingleOrder, myOrders } = require('../controllers/orderController');
+const {isAuthenticatedUser}  = require('../middlewares/authenticate')
+
+const router = express.Router();
+
+
+router.route('/order/new').post(isAuthenticatedUser,newOrder);
+router.route('/order/:id').get(isAuthenticatedUser,getSingleOrder);
+1.router.route('/myorders').get(isAuthenticatedUser,myOrders);
+
+module.exports = router; 
+
+
+steps:
+
+//////Admin: Get All Orders - /api/v1/orders
+
+
+step 1:
+
+orders/orderController.js
+//Admin: Get All Orders - /api/v1/orders
+
+exports.orders = catchAsyncError(async (req, res, next) => {
+    const orders = await Order.find();
+
+    let totalAmount = 0;
+
+    orders.forEach(order => {
+        totalAmount += order.totalPrice
+    })
+
+    res.status(200).json({
+        success: true,
+        totalAmount,
+        orders
+    })
+})
+
+
+step 2:
+//routes/order.js
+const express = require('express');
+const { newOrder, getSingleOrder, myOrders, orders } = require('../controllers/orderController');
+const {isAuthenticatedUser, authorizeRoles}  = require('../middlewares/authenticate')
+
+const router = express.Router();
+
+
+router.route('/order/new').post(isAuthenticatedUser,newOrder);
+router.route('/order/:id').get(isAuthenticatedUser,getSingleOrder);
+router.route('/myorders').get(isAuthenticatedUser,myOrders);
+
+
+//Admin Routes
+router.route('/orders').get(isAuthenticatedUser,authorizeRoles('admin'), orders)
+
+module.exports = router; 
+
+
+
+steps:
+//Admin: Update Order / Order Status  - api/v1/order/:id
+
+Admin order Status and Product Status ahh therinjika itha payanpaduthikalam
+
+step:1
+
+//controllers/orderController.js
+//Admin: Update Order / Order Status  - api/v1/order/:id
+
+exports.updateOrder = catchAsyncError(async (req, res, next) =>{
+    const order = await Order.findById(req.params.id);
+
+    if(order.orderStatus == 'Delivered'){
+        return next(new ErrorHandler('Order has been Already Delivered!', 400))
+    }
+//Updating the product  stock of each order item
+    order.orderItems.forEach(async orderItem =>{
+       await updateStock(orderItem.product, orderItem.quantity)
+    })
+    order.orderStatus = req.body.orderStatus;
+    order.deliveredAt = Date.now();
+    await order.save();
+
+ res.status(200).json({
+    success: true
+})
+
+});
+
+async function updateStock(productId, quantity) {
+    try {
+        const product = await Product.findById(productId);
+        if (!product) {
+            console.log("Product not found for productId:", productId);
+            return; // or throw an error
+        }
+        product.stock -= quantity;
+        await product.save({ validateBeforeSave: false });
+    } catch (error) {
+        console.error("Error updating stock:", error);
+        // Handle error as needed
+    }
+}
+
+step 2:
+//routes/order.js
+
+//Admin Routes
+router.route('/orders').get(isAuthenticatedUser,authorizeRoles('admin'), orders)
+router.route('/order/:id').put(isAuthenticatedUser,authorizeRoles('admin'), updateOrder)
+
+
+
+/////Admin: Delete Order - /api/v1/order/:id
+
+Admin order Delete panrathuku
+
+controllers/orderController.js
+//Admin: Delete Order - api/v1/order/:id
+exports.deleteOrder = catchAsyncError(async (req, res, next) =>{
+    const order = await Order.findById(req.params.id);
+    if(!order){
+        return next(new ErrorHandler(`Order not found wit this id:${req.params.id}`,404))
+    }
+
+    await order.deleteOne({ _id: req.params.id });
+    res.status(200).json({
+        success: true
+    })
+})
+
+//routes/order.js
+router.route('/order/:id').put(isAuthenticatedUser,authorizeRoles('admin'), updateOrder)
+                          .delete(isAuthenticatedUser,authorizeRoles('admin'), deleteOrder)
+
+
+
+
+Steps:
+Product Review API Services
+Create,Update,Delete Review API
+
+
+reduce()- Array Values ahh mothama orey values ahh matharathu than indha function oda work
+acc - accelemative values default value is zero and it continuously stores the previous value
+
+step 1:
+//models/productModel.js
+const mongoose = require('mongoose');
+
+const productSchema = new mongoose.Schema({
+    name : {
+        type : String,
+        required : [true,"Please Enter Product Name"],
+        trim : true,
+        maxLength : [100,"Product Name cannot exceed 100 Characters"]  
+      },
+      price:{
+        type : Number,
+        default:0.0
+      },
+      description : {
+        type : String,
+        required : [true,"please enter product descripton"]
+      },
+      ratings : {
+        type : String,
+        default:0
+      },
+      images :[
+        {
+            image:{
+                type : String,
+                required: true
+            }
+        }
+      ],
+      category:{
+        type : String,
+        required:[true,"Please enter product category"],
+        enum:{
+            values :[
+                'Electronics',
+                'Mobile Phones',
+                'Laptops',
+                'Accessories',
+                'Headphones',
+                'Food',
+                'Books',
+                'Cloths/Shoes',
+                'Beauty/Health',
+                'Sports',
+                'outdoor',
+                'Home'
+            ],
+            message : "Please select correct category"
+        }
+      },
+      seller:{
+        type:String,
+        required : [true, "Please enter product seller"]
+      },
+      stock:{
+        type : Number,
+        required :[true,"Please Enter Product Stock"],
+        maxLength:[20,'Product stock cannot exceed 20']
+      },
+      numOfReviews:{
+        type:Number,
+        default:0
+      },
+      reviews:[
+        {
+          1.   user: mongoose.Schema.Types.ObjectId,
+            rating:{
+                type : String,
+                required:true
+            },
+            comment:{
+                type : String,
+                required: true
+            }
+        }
+      ],
+      user: {
+        type : mongoose.Schema.Types.ObjectId
+      },
+      createdAt:{
+        type:Date,
+        default: Date.now()
+      }
+
+})
+
+let schema = mongoose.model('product',productSchema)
+
+module.exports = schema
+
+step 2:
+//controllers/productController.js
+//create Review - api/v1/review
+
+exports.createReview = catchAsyncError(async (req, res, next)=>{
+  const {productId, rating, comment} = req.body;
+
+  const review = {
+    user : req.user.id,
+    rating,
+    comment
+  }
+
+  const product = await Product.findById(productId);
+
+  //finding user review exists
+ const isReviewed =  product.reviews.find(review =>{
+    return review.user.toString() == req.user.id.toString()
+  })
+
+  if(isReviewed){
+    //updating the review
+          product.reviews.forEach(review => {
+            if(review.user.toString() == req.user.id.toString()){
+              review.comment = comment
+              review.rating = rating
+            }
+          })
+  }else{
+    //Creating the review
+    product.reviews.push(review);
+    product.numOfReviews = product.reviews.length;
+  }
+
+  //find the average of the product reviews
+  product.ratings = product.reviews.reduce((acc, review) =>{
+    return review.rating + acc;
+  },0) / product.reviews.length;
+  product.ratings = isNaN(product.ratings)?0:product.ratings;
+
+  await product.save({validateBeforeSave: false});
+
+  res.status(200).json({
+    sucess: true
+  })
+
+
+})
+
+step 3:
+//routes/product.js
+router.route('/review').put(isAuthenticatedUser,createReview)
+
+step 4:
+postman data
+{
+    "rating":3.5,
+    "comment":"Product quality is Good! & Package is not Good",
+    "productId":"65d31f96c9d5c67fec80c8b9"
+}
+
+
+Steps
+////Get Reviews
+
+step 1:
+//controllers/productController.js
+
+
+//Get Reviews - api/v1/reviews?id={productId}
+exports.getReviews = catchAsyncError(async (req, res, next) =>{
+  const product = await Product.findById(req.query.id);
+
+  res.status(200).json({
+    success: true,
+    reviews: product.reviews
+  })
+})
+
+step 2:
+
+routes/product.js
+router.route('/reviews').get(getReviews);
+
+step 3:
+Postman Data 
+{{base_url}}/api/v1/reviews?id=65d31f96c9d5c67fec80c8b9
+
+
+steps:
+///Delete Review
+
+Filter - nama anupuna id mattum filter pannitu mathathu ella id um apdiyae vachikum
+
+step 1:
+//controllers/productcontroller.js
+//Delete Review - api/v1/review
+
+exports.deleteReview = catchAsyncError(async (req, res, next)=>{
+  const product = await Product.findById(req.query.productId);
+
+  //filtering the reviews which does not match the deleting review id
+  const reviews = product.reviews.filter(review => {
+    review._id.toString() !== req.query.id.toString()
+  });
+  //number of reviews
+ const numOfReviews = reviews.length;
+
+ //finding the average with the filtered reviews
+ let ratings = reviews.reduce((acc, review) =>{
+  return review.rating + acc;
+},0) / reviews.length;
+ratings = isNaN(ratings)?0:ratings;
+
+//save the product document
+await Product.findByIdAndUpdate(req.query.productId,{
+  reviews,
+  numOfReviews,
+  ratings
+})
+res.status(200).json({
+  success: true
+})
+
+})
+
+step 2:
+//routes/product.js
+router.route('/review').put(isAuthenticatedUser,createReview)
+                       .delete(deleteReview);
+
+step 3:
+postman data:
+{{base_url}}/api/v1/review?id=65d895501367e3223bd11b62&productId=65d31f96c9d5c67fec80c8b9
+1st _id: (review id) and 2nd productId 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+ 
+
+
+
+
+
+
+ 
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+ 
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
