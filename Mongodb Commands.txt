@@ -1,0 +1,151 @@
+Mongodb Commands
+Mongosh Command Promptla Use Panra Commands
+
+
+1.show dbs
+2.use shop
+3.db.products.insertone({name:"Anbu"})
+4.db.products.findOne()
+5.db.products.insertOne({name:"Red T Shirt",Price:100,discription:"High Quality T-Shirt"})
+6.ctr+l -> Error Command lam Poitu yerkanavae Irukira old Command lam Varum
+7.ctr+Enter -> Next Line of the code 
+8.db.products.find()
+Crud Operations:
+1.Show dbs
+2.use Office
+3.db.employee.insertOne({name:"Logesh",details:{position:"React",salary:40000}})
+4.db.employee.insertMany([
+...{name:"Rahul",details:{position:"Java Developer",Salary:60000}},
+...{name:"Daniel",details:{position:"Php Developers",salary:70000}},
+...{name:"Nizanth",details:{position:"Python",Salary:80000}}
+...])
+5.db.employee.findOne()
+6.db.employee.findOne({name:"Nizanth",})
+7.db.employee.find()
+8.db.employee.find("details.position","Php Developers",})
+9.db.employee.updateOne({name:"Rahul"},{$set:{details.position":"Full stack developer"}})
+10.db.employee.updateMany({"details.position":"php Developer"},{$set:{"details.salary":60000}})
+Delete
+11.db.employee.deleteOne({name:"Ravi"})
+DeleteMany
+12.db.employee.deleteMany({"details.position":"php developer"})
+
+
+create collection
+
+1.db.createCollection('users',{size:525808})
+2.db.createCollection('users',{max:5000})
+3.db.createCollection('users',{storageEngine:{wiredTiger:{{}}}
+
+create collection
+db.createCollection('users',{})
+db.users.insertOne({name:"Logesh"})
+
+Greater than Command
+
+1.db.employee.find({"details.salary":{$gt:50000}})
+2.db.employee.find({"details.salary":{$lt;50000}})
+cursor:
+find method does not give all datas it gives only for cursor objectb which means cursor seperate the large amount of data in to small
+
+Total Data Display:
+db.customers.find().toArray()
+
+mongodb shell la javascript function run agum
+
+db.customers.find().forEach((data)=>{print(data)})
+
+to Array()
+total ahh ella data um get panni print pannikalam
+
+forEach()
+for Each konjam konjam ahh data va get panni konjam konjam ahh print pannum 
+
+Projection:
+Ella Documets um eduthu athila irukira particular data va mattum print pannanumna example ku ella documents la irukira name mattum print agura mathiri use pannikalam
+Example Code:
+db.employee.find({},{name:1})
+
+id um serthu print agum id venamna 
+db.employee.find({},{name:1,-id:0})
+o/p
+[{name:'Logesh'}
+{name:'Rahul'}]
+
+Default Value in Projection:
+
+db.employee.find({},{name:1,-id:0,is_employee:true})
+o/p
+[
+{name:'Logesh',is-employee:true}
+{name:'Rahul',is-employee:true}
+]
+
+Limit:
+db.employee.find().limit(2)
+Skip:
+db.employee.find().skip(4)
+
+Sort() Order Wise Print Pannikalam
+Ascending Order 
+db.employee.find().sort({name:1})
+db.employee.find().sort({name:-1})
+
+Query Operators
+1.Comparison Operators
+2.Logical Operators
+3.Evaluation Operators
+
+Comparison Operators
+$eq -> values are equal
+db.employee.find({email:{$eq:"anbu@gmail.com"}})
+2.$ne -> values are not equal
+db.employee.find({email:{$ne:"anbu@gmail.com"}})
+3.$gt (value is greater than another value)
+db.employee.find({age:{$gt:30}})
+4.$gte (value is greater than or equal to another value)
+db.employee.find({age:{$gte:29}})
+5.$lt(value is less than another value)
+db.employee.find(age:{$lt:29}})
+6.$lte (value is less than or equal to another value)
+db.employee.find(age:($lte:29}})
+7.$in (value is matched within an array)
+db.employee.find({age:{$in:[28,38,40]}})
+
+
+Logical Operator
+$and - Returns Documents where both queries match
+
+db.employee.find({$and:[{email:{$eq:"anbu@gmail.com"}},{age:{$eq:28}}])
+
+db.employee.find({$and:[{name:{$eq:"Gokul"}}),{age:{$eq:25}})
+
+$or - Returns Documents where either Query Matches
+
+db.employee.find({$or:[{name:{$eq:"anbu@gmail.com"}}]})
+conditions one satisfy it can be print the o/p
+
+$not->Returns Documents Where Both Queries fail to match
+$nor -> Returns Documents where the query doesnot match
+
+Evalution Operators
+$regex -> Allows the use of regular Expression
+
+db.employee.find({name:{$regex:"^J"}})
+
+case insensitive endha letter kuduthalum Print Aganumna
+
+db.employee.find({name:{$regex:"^nj",$options:"i"}})
+db.employee.find({name:{name:{$regex:/^j/,$options:"i"}})
+
+
+$where -> Allows the use javascript Expressions
+
+db.employee.find({$where:function(){return this.name=="Jill Render";}})
+
+$text - performs a text search on the content
+Article la irunthu Text Panni Eduthukalam
+
+db.articles.find({$text:{$text:{$search:"bake coffee cake"}}
+
+
