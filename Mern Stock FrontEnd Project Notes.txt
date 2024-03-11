@@ -742,7 +742,7 @@ function MetaData({ title }) {
 
 export default MetaData;
 
-step 4:
+step 5:
 //components/Home.js
 import React from 'react'
 import MetaData from './layouts/MetaData'
@@ -888,6 +888,34 @@ function Home() {
 }
 
 export default Home
+
+step 6:
+
+import './App.css';
+import Home from './components/Home';
+
+import Footer from './components/layouts/Footer';
+import Header from './components/layouts/Header';
+import {HelmetProvider} from 'react-helmet-async';
+import { BrowserRouter as Router, Route,Routes } from 'react-router-dom';
+function App() {
+  return (
+    <Router>
+    <div className="App">
+    <HelmetProvider>
+    <Header/>
+    <Routes>
+      <Route path='/' element={<Home/>} />
+    </Routes>
+    <Footer/>
+    </HelmetProvider>
+    </div>
+    </Router>
+  );
+}
+
+export default App;
+
 
 
 
