@@ -1,0 +1,710 @@
+step 1:
+npx create-react-app hookcrud
+npm i react-router-dom
+
+step 2:
+
+//App.js
+
+
+
+import './App.css';
+import UserTable from './tables/UserTable';
+
+function App() {
+
+  
+  return (
+    <div className="container">
+      <h1>CRUD APP WITH HOOKS</h1>
+      <div className='flex-large'>
+               <h2>View Users</h2>
+              <UserTable/>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+step 2:
+
+//src/tables/UserTable.js
+import React from 'react'
+
+function UserTable() {
+  return (
+    <div>
+
+ <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>UserName</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>name</td>
+                <td>username</td>
+                <td>
+                <button>Edit</button>
+                <button>Delete</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+
+
+
+
+    </div>
+  )
+}
+
+export default UserTable
+
+
+
+//View User
+step 3:
+App.js
+
+
+import { useState } from 'react';
+import './App.css';
+import UserTable from './tables/UserTable';
+
+function App() {
+  const usersData = [
+    {id:1,name:'Logesh',username:'jvlogesh'},
+    {id:2,name:'Ramesh',username:'rameshstr'},
+    {id:3,name:'Daniel',username:'Daniel'}
+  ];
+
+  const [users,setUsers]=useState(usersData);
+  
+  return (
+    <div className="container">
+      <h1>CRUD APP WITH HOOKS</h1>
+      <div className='flex-large'>
+               <h2>View Users</h2>
+             
+<UserTable users={users}/>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+step 4:
+//src/tables/UserTable.js
+import React from 'react'
+
+function UserTable(props) {
+  return (
+    <div>
+
+    <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>UserName</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+    
+            {props.users.map((user)=>(
+                <tr key={user.id}>
+                    <td>{user.name}</td>
+                    <td>{user.username}</td>
+                    <td>
+                    <button>Edit</button>
+                    <button>Delete</button>
+                    </td>
+                </tr>
+                ))}
+               
+            </tbody>
+        </table>
+    
+    
+    
+    
+    
+        </div>
+    
+  )
+}
+
+export default UserTable
+
+
+///Delete User
+
+App.js
+
+import { useState } from 'react';
+import './App.css';
+import UserTable from './tables/UserTable';
+
+function App() {
+  const usersData = [
+    {id:1,name:'Logesh',username:'jvlogesh'},
+    {id:2,name:'Ramesh',username:'rameshstr'},
+    {id:3,name:'Daniel',username:'Daniel'}
+  ];
+
+  const [users,setUsers]=useState(usersData);
+
+  const deleteUser = (id)=>{
+    setUsers(users.filter((user)=>user.id!==id))
+  }
+  
+  return (
+    <div className="container">
+      <h1>CRUD APP WITH HOOKS</h1>
+      <div className='flex-large'>
+               <h2>View Users</h2>
+             
+<UserTable  deleteUser={deleteUser} users={users}/>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+step 2:
+//src/tables/UserTable.js
+
+import React from 'react'
+
+function UserTable(props) {
+  return (
+    <div>
+
+    <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>UserName</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+    
+            {props.users.map((user)=>(
+                <tr key={user.id}>
+                    <td>{user.name}</td>
+                    <td>{user.username}</td>
+                    <td>
+                    <button>Edit</button>
+                  1.  <button onClick={()=>props.deleteUser(user.id)} className='button mmuted-button'>Delete</button>
+                    </td>
+                </tr>
+                ))}
+               
+            </tbody>
+        </table>
+    
+    
+    
+    
+    
+        </div>
+    
+  )
+}
+
+export default UserTable
+
+
+//Add user
+
+step 1:
+//forms/AddUserForm.js
+
+import React, { useState } from 'react'
+
+
+function AddUserForm(props) {
+    const initialFormState = {id:null,name:'',username:''}
+    const [user,setUser] = useState(initialFormState);
+
+    const handleInputChange = (event)=>{
+        const {name,value} = event.target
+
+        setUser({...user,[name]:value})
+    } 
+  return (
+    <form onSubmit={
+        event => {
+            event.preventDefault();
+            if(!user.name||!user.username) return;
+            props.addUser(user);
+            setUser(initialFormState);
+        }
+    }>
+        <label>name</label>
+        <input  type='text' name='name' value={user.name} onChange={handleInputChange}/>
+        <label>UserName</label>
+        <input type='text' name='username' value={user.username}  onChange={handleInputChange}/>
+        <button>Add new user</button>
+    </form>
+  )
+}
+
+export default AddUserForm
+
+step 2:
+App.js
+import { useState } from "react";
+import "./App.css";
+import UserTable from "./tables/UserTable";
+import AddUserForm from "./forms/AddUserForm";
+
+function App() {
+  const usersData = [
+    { id: 1, name: "Logesh", username: "jvlogesh" },
+    { id: 2, name: "Ramesh", username: "rameshstr" },
+    { id: 3, name: "Daniel", username: "Daniel" },
+  ];
+
+  const [users, setUsers] = useState(usersData);
+
+  //DeleteUser
+  const deleteUser = (id) => {
+    setUsers(users.filter((user) => user.id !== id));
+  };
+
+  //AddUser
+  const addUser = (user) => {
+    user.id = users.length + 1;
+    setUsers([...users, user]);
+  };
+
+  return (
+    <div className="container">
+      <h1>CRUD APP WITH HOOKS</h1>
+
+      <div>
+        <h2>Add User</h2>
+        <AddUserForm addUser={addUser} />
+      </div>
+      <div className="flex-large">
+        <h2>View Users</h2>
+
+        <UserTable deleteUser={deleteUser} users={users} />
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+
+
+///Edit and Update User
+
+//forms/EditUserForm.js
+import React, { useEffect, useState } from 'react'
+
+
+function EditUserForm(props) {
+
+    const [user,setUser] = useState(props.currentUser)
+
+    useEffect(()=>{
+        setUser(props.currentUser)
+    },[props])
+
+    const handleInputChange = (event)=>{
+        const {name,value}= event.target
+        setUser({...user,[name]:value})
+    }
+  return (
+    <div className="editUser">
+    <h2 className='titles'>Add User</h2>
+    <form onSubmit={
+        event =>{
+            event.preventDefault();
+            if(!user.name || !user.username) return;
+            props.updateUser(user.id,user);
+        }
+    }>
+       <label className='nameLabels'>Name</label><br/>
+       <input className='nameInputs' type='text' name='name' value={user.name} onChange={handleInputChange}/><br/>
+       <label className='userNameLabels'>Username</label><br/>
+       <input  className='userNameInputs' type='text' name='username' value={user.username} onChange={handleInputChange} /><br/>
+       <button className='updateButton'>Update user</button>
+       <button className="button muted-button" onClick={()=>{
+                props.setEditing(false)
+            }}>Cancel</button>
+    </form>
+    </div>
+  )
+}
+
+export default EditUserForm
+
+step 2:
+App.js
+import { useState } from "react";
+import "./App.css";
+import UserTable from "./tables/UserTable";
+import AddUserForm from "./forms/AddUserForm";
+import EditUserForm from "./forms/EditUserForm";
+
+function App() {
+  const usersData = [
+    { id: 1, name: "Logesh", username: "jvlogesh" },
+    { id: 2, name: "Ramesh", username: "rameshstr" },
+    { id: 3, name: "Daniel", username: "Daniel" },
+  ];
+
+  const [users, setUsers] = useState(usersData);
+
+  //DeleteUser
+  const deleteUser = (id) => {
+    setUsers(users.filter((user) => user.id !== id));
+    setEditing(false);
+  };
+
+  //AddUser
+  const addUser = (user) => {
+    user.id = users.length + 1;
+    setUsers([...users, user]);
+  };
+
+  //Edit User
+  const [editing,setEditing]=useState(false)
+
+  const initialFormState = {id:null,name:"",username:""}
+  const [currentUser,setCurrentUser]=useState(initialFormState);
+
+  const editRow = (user)=>{
+    setEditing(true);
+    setCurrentUser({id:user.id,name:user.name,username:user.username});
+
+  }
+
+  const updateUser = (id,updatedUser)=>{
+    setEditing(false);
+    setUsers(users.map((user)=>(user.id === id?updatedUser:user)))
+  }
+
+  return (
+    <div className="container">
+      <h1>CRUD APP WITH HOOKS</h1>
+   <div className="flex-row">
+         <div className="flex-large">
+            {editing?(<div>
+              <h2>Editing </h2>
+              <EditUserForm 
+              setEditing={setEditing}
+              currentUser={currentUser}
+              updateUser={updateUser}/>
+            </div>):(
+                   <div>
+                   <h2>Add User</h2>
+                   <AddUserForm addUser={addUser} />
+                 </div>
+            )}
+         </div>
+  
+     
+      <div className="flex-large">
+        <h2>View Users</h2>
+
+        <UserTable  editRow={editRow} deleteUser={deleteUser} users={users} />
+      </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+step 3:
+src/tables/UserTable.js
+import React from 'react'
+
+function UserTable(props) {
+  return (
+    <div>
+
+    <table className="tableDesighn">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>UserName</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+    {props.users.length>0?(
+            props.users.map((user)=>(
+                <tr key={user.id}>
+                    <td>{user.name}</td>
+                    <td>{user.username}</td>
+                    <td>
+                    <button onClick={()=>{
+                            props.editRow(user)
+                        }} className="button muted-button">Edit</button>
+                    <button onClick={()=>props.deleteUser(user.id)} className='button mmuted-button'>Delete</button>
+                    </td>
+                </tr>
+                ))):(
+                    <tr>
+                    <td colSpan={3}>No users</td>
+                </tr>
+                )}
+               
+            </tbody>
+        </table>
+    
+    
+    
+    
+    
+        </div>
+    
+  )
+}
+
+export default UserTable
+
+step 4:
+App.css
+.table {
+    margin-top: 3%;
+  }
+  .tableDesighn {
+    width: 80%;
+    margin-left: 5%;
+  }
+  table,
+  th,
+  td {
+    border: 1px solid black;
+  }
+  .addUser{
+    box-sizing: border-box;
+    width: 25%;
+    height: 30%;
+  
+    border: 2px solid white;
+    border-radius: 5%;
+    background-color: rgb(223, 210, 194);
+  
+    font-family: "Poppins", sans-serif;
+    font-family: "Raleway", sans-serif;
+    margin-left: 38%;
+  }
+  .nameLabel{
+    margin-right: 30%;
+  }
+  .nameInput{
+    width: 40%;
+  }
+  .userNameLabel{
+    margin-right: 20%;
+  }
+  .userNameInput{
+    width: 40%;
+  }
+  .addNewButton{
+    border-radius: 10%;
+    margin-top: 2%;
+  }
+  .title{
+    text-align: center;
+  }
+  form{
+    text-align: center;
+  }
+
+  .editUser{
+    box-sizing: border-box;
+    width: 25%;
+    height: 30%;
+  
+    border: 2px solid white;
+    border-radius: 5%;
+    background-color: rgb(223, 210, 194);
+  
+    font-family: "Poppins", sans-serif;
+    font-family: "Raleway", sans-serif;
+    margin-left: 38%;
+  }
+  .nameLabels{
+    margin-right: 30%;
+  }
+  .nameInputs{
+    width: 40%;
+  }
+  .userNameLabels{
+    margin-right: 20%;
+  }
+  .userNameInputs{
+    width: 40%;
+  }
+ 
+  .title{
+    text-align: center;
+  }
+  .updateButton{
+    margin-top: 2%;
+  }
+
+
+
+
+
+   
+
+
+
+
+
+
+
+
+   
+
+
+
+
+
+
+
+
+   
+
+
+
+
+
+
+
+
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
