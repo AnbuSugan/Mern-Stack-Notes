@@ -1,1 +1,292 @@
+Step 1:
+src/tables/UserTable.js
+import React from 'react'
+
+function UserTable(props) {
+  return (
+    <div>
+
+    <table className="tableDesighn">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>UserName</th>
+                    <th>MobileNumber</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+    {props.users.length>0?(
+            props.users.map((user)=>(
+                <tr key={user.id}>
+                    <td>{user.name}</td>
+                    <td>{user.username}</td>
+                    <td>{user.mobileNumber}</td>
+                    <td>
+                    <button onClick={()=>{
+                            props.editRow(user)
+                        }} className="button muted-button">Edit</button>
+                    <button onClick={()=>props.deleteUser(user.id)} className='button mmuted-button'>Delete</button>
+                    </td>
+                </tr>
+                ))):(
+                    <tr>
+                    <td colSpan={3}>No users</td>
+                </tr>
+                )}
+               
+            </tbody>
+        </table>
+    
+    
+    
+    
+    
+        </div>
+    
+  )
+}
+
+export default UserTable
+
+step 2:
+//src/forms/UserForm.js
+import React, { useState, useEffect, useMemo } from 'react';
+
+
+function UserForm({ addUser, updateUser, setEditing, currentUser }) {
+    const initialFormState = useMemo(() => ({ id: null, name: '', username: '',mobileNumber:'' }), []);
+    const [user, setUser] = useState(initialFormState);
+    const [errors, setErrors] = useState({});
+
+    useEffect(() => {
+        setUser(currentUser || initialFormState);
+    }, [currentUser, initialFormState]);
+
+    const handleInputChange = event => {
+        const { name, value } = event.target;
+        setUser({ ...user, [name]: value });
+    };
+
+    const handleSubmit = event => {
+        event.preventDefault();
+
+        const formErrors = validateForm(user);
+        if (Object.keys(formErrors).length > 0) {
+            setErrors(formErrors);
+            return;
+        }
+
+        if (user.id) {
+            updateUser(user.id, user);
+        } else {
+            addUser(user);
+        }
+
+        setUser(initialFormState);
+        setErrors({});
+    };
+
+    const validateForm = (user) => {
+        let errors = {};
+        if (!user.name) {
+            errors.name = 'Name is required';
+        }
+        if (!user.username) {
+            errors.username = 'Username is required';
+        }
+        if (!user.mobileNumber) {
+            errors.mobileNumber = 'MobileNumber is required';
+        }
+        return errors;
+    };
+
+    return (
+        <div className='box'>
+        <div className="userForm">
+            <h2 className='title'>{currentUser ? 'Update User' : 'Add User'}</h2>
+            <form onSubmit={handleSubmit}>
+                <div>
+                    <label className='nameLabel'>Name</label><br />
+                    <input className='nameInput' type='text' name='name' value={user.name} onChange={handleInputChange} />
+                    {errors.name && <span className="error">{errors.name}</span>}
+                </div>
+                <div>
+                    <label className='userNameLabel'>UserName</label><br />
+                    <input className='userNameInput' type='text' name='username' value={user.username} onChange={handleInputChange} />
+                    {errors.username && <span className="error">{errors.username}</span>}
+                </div>
+                <div>
+    <label className='mobileNumberLabel'>Mobile Number</label><br />
+    <input 
+        className='mobileNumberInput' 
+        type='tel' 
+        name='mobileNumber' 
+        value={user.mobileNumber} 
+        onChange={handleInputChange} 
+        maxLength={10} 
+    />
+    {errors.mobileNumber && <span className="error">{errors.mobileNumber}</span>}
+</div>
+
+                <button className='submitButton'>{currentUser ? 'Update User' : 'Add User'}</button>
+                {currentUser && (
+                    <button className="button muted-button" onClick={() => setEditing(false)}>Cancel</button>
+                )}
+            </form>
+        </div>
+        </div>
+    );
+}
+
+export default UserForm;
+
+step 3:
+App.js
+import { useState } from "react";
+import "./App.css";
+import UserTable from "./tables/UserTable";
+import UserForm from "./forms/UserForm";
+
+
+function App() {
+  const usersData = [
+    { id: 1, name: "Logesh", username: "jvlogesh",mobileNumber:"8072886792" },
+    { id: 2, name: "Ramesh", username: "rameshstr",mobileNumber:"8072886792"  },
+    { id: 3, name: "Daniel", username: "Daniel",mobileNumber:"8072886792"  },
+  ];
+
+  const [users, setUsers] = useState(usersData);
+  const [editing, setEditing] = useState(false);
+  const initialFormState = {id:null,name:"",username:"",mobileNumber:""};
+  const [currentUser, setCurrentUser] = useState(initialFormState);
+
+  const addUser = (user) => {
+    user.id = users.length + 1;
+    setUsers([...users, user]);
+  };
+
+  const deleteUser = (id) => {
+    setUsers(users.filter((user) => user.id !== id));
+    setEditing(false);
+  };
+
+  const editRow = (user)=>{
+    setEditing(true);
+    setCurrentUser({id:user.id,name:user.name,username:user.username,mobileNumber:user.mobileNumber});
+  };
+
+  const updateUser = (id, updatedUser)=>{
+    setEditing(false);
+    setUsers(users.map((user)=>(user.id === id?updatedUser:user)))
+  };
+
+  return (
+    <div className="container">
+      <h1>CRUD APP WITH HOOKS</h1>
+      <div className="flex-row">
+        <div className="flex-large">
+          {editing ? (
+            <div>
+              
+              <UserForm 
+                setEditing={setEditing}
+                currentUser={currentUser}
+                updateUser={updateUser}
+                addUser={addUser}
+              />
+            </div>
+          ) : (
+            <div>
+          
+              <UserForm
+                addUser={addUser}
+              />
+            </div>
+          )}
+        </div>
+        <div className="flex-large">
+          <h2>View Users</h2>
+          <UserTable  
+            editRow={editRow} 
+            deleteUser={deleteUser} 
+            users={users} 
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+step 4:
+App.css
+App.css
+.table {
+    margin-top: 3%;
+  }
+  .tableDesighn {
+    width: 80%;
+    margin-left: 5%;
+  }
+  table,
+  th,
+  td {
+    border: 1px solid black;
+  }
+  .box {
+    box-sizing: border-box;
+    width: 25%;
+    height: 30%;
+  
+    margin-left: 35%;
+    border: 2px solid white;
+    border-radius: 5%;
+    background-color: rgb(223, 210, 194);
+    font-family: "Poppins", sans-serif;
+   
+    font-family: "Raleway", sans-serif;
+}
+
+  .nameLabel{
+    margin-right: 30%;
+  }
+  .nameInput{
+    width: 40%;
+  }
+  .userNameLabel{
+    margin-right: 20%;
+  }
+  .userNameInput{
+    width: 40%;
+  }
+  .mobileNumberLabel{
+    margin-right: 20%;
+  }
+  .mobileNumberInput{
+    width: 40%;
+  }
+  .addNewButton{
+    border-radius: 10%;
+    margin-top: 2%;
+  }
+  .title{
+    text-align: center;
+  }
+  form{
+    text-align: center;
+  }
+
+ 
+ 
+
+  .updateButton{
+    margin-top: 2%;
+  }
+
+
+
+
+   
 
