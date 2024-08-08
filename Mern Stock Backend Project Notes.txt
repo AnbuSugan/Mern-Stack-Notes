@@ -121,7 +121,7 @@ click no environment and set environment name and save and use it
 
 step 7:
 
-install nodemon
+npm install nodemon
 npm i nodemon --save-dev
 run command
 nodemon .\backend\server.js
