@@ -433,7 +433,7 @@ process.exit();
 seedProducts();
 
 //Package.json la
-   "seeder":"node utils/seeder.js"
+   "seeder":"node backend/utils/seeder.js"
 run command : npm run seeder
 
 step:11
